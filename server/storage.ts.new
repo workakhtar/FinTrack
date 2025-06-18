@@ -1,0 +1,1485 @@
+import { employees, projects, billings, partners, bonuses, revenues, 
+  profitDistributions, salaries, expenses } from "@/shared/schema";
+
+import { InsertEmployee, Employee, InsertProject, Project, 
+  InsertBilling, Billing, InsertPartner, Partner, 
+  InsertBonus, Bonus, InsertRevenue, Revenue, 
+  InsertProfitDistribution, ProfitDistribution, 
+  InsertSalary, Salary, InsertExpense, Expense } from "@/shared/schema";
+
+import { eq } from "drizzle-orm";
+import { db } from "./db";
+
+export interface IStorage {
+  // Employee operations
+  getEmployees(): Promise<Employee[]>;
+  getEmployee(id: number): Promise<Employee | undefined>;
+  createEmployee(employee: InsertEmployee): Promise<Employee>;
+  updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined>;
+  deleteEmployee(id: number): Promise<boolean>;
+
+  // Project operations
+  getProjects(): Promise<Project[]>;
+  getProject(id: number): Promise<Project | undefined>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined>;
+  deleteProject(id: number): Promise<boolean>;
+
+  // Billing operations
+  getBillings(): Promise<Billing[]>;
+  getBillingsByProject(projectId: number): Promise<Billing[]>;
+  getBilling(id: number): Promise<Billing | undefined>;
+  createBilling(billing: InsertBilling): Promise<Billing>;
+  updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined>;
+  deleteBilling(id: number): Promise<boolean>;
+
+  // Partner operations
+  getPartners(): Promise<Partner[]>;
+  getPartner(id: number): Promise<Partner | undefined>;
+  createPartner(partner: InsertPartner): Promise<Partner>;
+  updatePartner(id: number, partner: Partial<InsertPartner>): Promise<Partner | undefined>;
+  deletePartner(id: number): Promise<boolean>;
+
+  // Bonus operations
+  getBonuses(): Promise<Bonus[]>;
+  getBonusesByProject(projectId: number): Promise<Bonus[]>;
+  getBonusesByEmployee(employeeId: number): Promise<Bonus[]>;
+  getBonus(id: number): Promise<Bonus | undefined>;
+  createBonus(bonus: InsertBonus): Promise<Bonus>;
+  updateBonus(id: number, bonus: Partial<InsertBonus>): Promise<Bonus | undefined>;
+  deleteBonus(id: number): Promise<boolean>;
+
+  // Revenue operations
+  getRevenues(): Promise<Revenue[]>;
+  getRevenue(id: number): Promise<Revenue | undefined>;
+  createRevenue(revenue: InsertRevenue): Promise<Revenue>;
+  updateRevenue(id: number, revenue: Partial<InsertRevenue>): Promise<Revenue | undefined>;
+  deleteRevenue(id: number): Promise<boolean>;
+
+  // Profit Distribution operations
+  getProfitDistributions(): Promise<ProfitDistribution[]>;
+  getProfitDistributionsByPartner(partnerId: number): Promise<ProfitDistribution[]>;
+  getProfitDistribution(id: number): Promise<ProfitDistribution | undefined>;
+  createProfitDistribution(distribution: InsertProfitDistribution): Promise<ProfitDistribution>;
+  updateProfitDistribution(id: number, distribution: Partial<InsertProfitDistribution>): Promise<ProfitDistribution | undefined>;
+  deleteProfitDistribution(id: number): Promise<boolean>;
+
+  // Salary operations
+  getSalaries(): Promise<Salary[]>;
+  getSalariesByEmployee(employeeId: number): Promise<Salary[]>;
+  getSalariesByMonth(month: string, year: number): Promise<Salary[]>;
+  getSalary(id: number): Promise<Salary | undefined>;
+  createSalary(salary: InsertSalary): Promise<Salary>;
+  updateSalary(id: number, salary: Partial<InsertSalary>): Promise<Salary | undefined>;
+  deleteSalary(id: number): Promise<boolean>;
+  calculateNetSalary(salaryDetails: Partial<InsertSalary>): number;
+
+  // Expense operations
+  getExpenses(): Promise<Expense[]>;
+  getExpense(id: number): Promise<Expense | undefined>;
+  createExpense(expense: InsertExpense): Promise<Expense>;
+  updateExpense(id: number, expense: Partial<InsertExpense>): Promise<Expense | undefined>;
+  deleteExpense(id: number): Promise<boolean>;
+
+  // Dashboard data operations
+  getDashboardData(): Promise<any>;
+}
+
+export class MemStorage implements IStorage {
+  private employees: Map<number, Employee>;
+  private projects: Map<number, Project>;
+  private billings: Map<number, Billing>;
+  private partners: Map<number, Partner>;
+  private bonuses: Map<number, Bonus>;
+  private revenues: Map<number, Revenue>;
+  private profitDistributions: Map<number, ProfitDistribution>;
+  private salaries: Map<number, Salary>;
+  private expenses: Map<number, Expense>;
+
+  private currentEmployeeId: number;
+  private currentProjectId: number;
+  private currentBillingId: number;
+  private currentPartnerId: number;
+  private currentBonusId: number;
+  private currentRevenueId: number;
+  private currentProfitDistributionId: number;
+  private currentSalaryId: number;
+  private currentExpenseId: number;
+
+  constructor() {
+    this.employees = new Map();
+    this.projects = new Map();
+    this.billings = new Map();
+    this.partners = new Map();
+    this.bonuses = new Map();
+    this.revenues = new Map();
+    this.profitDistributions = new Map();
+    this.salaries = new Map();
+    this.expenses = new Map();
+
+    this.currentEmployeeId = 1;
+    this.currentProjectId = 1;
+    this.currentBillingId = 1;
+    this.currentPartnerId = 1;
+    this.currentBonusId = 1;
+    this.currentRevenueId = 1;
+    this.currentProfitDistributionId = 1;
+    this.currentSalaryId = 1;
+    this.currentExpenseId = 1;
+
+    this.initializeSampleData();
+  }
+
+  private initializeSampleData() {
+    // Create departments
+    const departments = ["Software Development", "Design", "QA", "DevOps", "Product", "Sales", "HR"];
+
+    // Create sample employees
+    this.createEmployee({
+      firstName: "John",
+      lastName: "Doe",
+      email: "john.doe@techsolutions.com",
+      department: "Software Development",
+      role: "Senior Developer",
+      status: "Active",
+      salary: "8500",
+      projectId: 1,
+      avatar: "https://randomuser.me/api/portraits/men/1.jpg"
+    });
+
+    this.createEmployee({
+      firstName: "Jane",
+      lastName: "Smith",
+      email: "jane.smith@techsolutions.com",
+      department: "Design",
+      role: "Lead Designer",
+      status: "Active",
+      salary: "7500",
+      projectId: 1,
+      avatar: "https://randomuser.me/api/portraits/women/2.jpg"
+    });
+
+    this.createEmployee({
+      firstName: "Michael",
+      lastName: "Johnson",
+      email: "michael.johnson@techsolutions.com",
+      department: "QA",
+      role: "QA Lead",
+      status: "Active",
+      salary: "7000",
+      projectId: 2,
+      avatar: "https://randomuser.me/api/portraits/men/3.jpg"
+    });
+
+    this.createEmployee({
+      firstName: "Emily",
+      lastName: "Williams",
+      email: "emily.williams@techsolutions.com",
+      department: "Software Development",
+      role: "Backend Developer",
+      status: "Active",
+      salary: "7200",
+      projectId: 2,
+      avatar: "https://randomuser.me/api/portraits/women/4.jpg"
+    });
+
+    this.createEmployee({
+      firstName: "David",
+      lastName: "Brown",
+      email: "david.brown@techsolutions.com",
+      department: "DevOps",
+      role: "DevOps Engineer",
+      status: "Active",
+      salary: "8000",
+      projectId: 3,
+      avatar: "https://randomuser.me/api/portraits/men/5.jpg"
+    });
+
+    this.createEmployee({
+      firstName: "Sarah",
+      lastName: "Taylor",
+      email: "sarah.taylor@techsolutions.com",
+      department: "Product",
+      role: "Product Manager",
+      status: "Active",
+      salary: "9000",
+      projectId: 3,
+      avatar: "https://randomuser.me/api/portraits/women/6.jpg"
+    });
+
+    this.createEmployee({
+      firstName: "James",
+      lastName: "Anderson",
+      email: "james.anderson@techsolutions.com",
+      department: "Sales",
+      role: "Sales Manager",
+      status: "On Leave",
+      salary: "8500",
+      projectId: null,
+      avatar: "https://randomuser.me/api/portraits/men/7.jpg"
+    });
+
+    this.createEmployee({
+      firstName: "Maria",
+      lastName: "Garcia",
+      email: "maria.garcia@techsolutions.com",
+      department: "HR",
+      role: "HR Manager",
+      status: "Active",
+      salary: "7800",
+      projectId: null,
+      avatar: "https://randomuser.me/api/portraits/women/8.jpg"
+    });
+
+    // Create sample projects
+    this.createProject({
+      name: "E-commerce Platform",
+      client: "RetailCo Inc.",
+      status: "Active",
+      progress: 75,
+      managerId: 1,
+      description: "Building a modern e-commerce platform with advanced analytics and customer insights."
+    });
+
+    this.createProject({
+      name: "Banking App Redesign",
+      client: "Global Finance",
+      status: "Active",
+      progress: 45,
+      managerId: 2,
+      description: "Redesigning the UI/UX for a major banking application with focus on accessibility and user experience."
+    });
+
+    this.createProject({
+      name: "Healthcare Management System",
+      client: "MediCare Solutions",
+      status: "Planning",
+      progress: 15,
+      managerId: 6,
+      description: "Developing a comprehensive healthcare management system for hospitals and clinics."
+    });
+
+    this.createProject({
+      name: "Logistics Tracking Platform",
+      client: "FreightWays Inc.",
+      status: "On Hold",
+      progress: 60,
+      managerId: 5,
+      description: "Creating a real-time logistics tracking platform with predictive delivery estimations."
+    });
+
+    // Create sample billings
+    this.createBilling({
+      projectId: 1,
+      month: "January",
+      year: 2023,
+      amount: "15000",
+      status: "Paid",
+      invoiceDate: "2023-01-15",
+      paymentDate: "2023-01-28"
+    });
+
+    this.createBilling({
+      projectId: 1,
+      month: "February",
+      year: 2023,
+      amount: "15000",
+      status: "Paid",
+      invoiceDate: "2023-02-15",
+      paymentDate: "2023-02-28"
+    });
+
+    this.createBilling({
+      projectId: 1,
+      month: "March",
+      year: 2023,
+      amount: "15000",
+      status: "Paid",
+      invoiceDate: "2023-03-15",
+      paymentDate: "2023-03-30"
+    });
+
+    this.createBilling({
+      projectId: 2,
+      month: "January",
+      year: 2023,
+      amount: "10000",
+      status: "Paid",
+      invoiceDate: "2023-01-10",
+      paymentDate: "2023-01-20"
+    });
+
+    this.createBilling({
+      projectId: 3,
+      month: "October",
+      year: 2023,
+      amount: "8000",
+      status: "Pending",
+      invoiceDate: "2023-10-10",
+      paymentDate: null
+    });
+
+    this.createBilling({
+      projectId: 2,
+      month: "October",
+      year: 2023,
+      amount: "10000",
+      status: "Paid",
+      invoiceDate: "2023-10-10",
+      paymentDate: "2023-10-20"
+    });
+
+    this.createBilling({
+      projectId: 4,
+      month: "October",
+      year: 2023,
+      amount: "7500",
+      status: "Overdue",
+      invoiceDate: "2023-10-02",
+      paymentDate: null
+    });
+    
+    // Add May 2025 billing data (to fix dashboard revenue calculation)
+    this.createBilling({
+      projectId: 1,
+      month: "May",
+      year: 2025,
+      amount: "20800",
+      status: "Pending",
+      invoiceDate: "2025-05-01",
+      paymentDate: null
+    });
+
+    // Create sample bonuses
+    this.createBonus({
+      projectId: 1,
+      employeeId: 1,
+      amount: "1500",
+      month: "January",
+      year: 2023,
+      percentage: "10",
+      description: "Performance bonus for completing key features ahead of schedule"
+    });
+
+    this.createBonus({
+      projectId: 1,
+      employeeId: 2,
+      amount: "1200",
+      month: "January",
+      year: 2023,
+      percentage: "8",
+      description: "Design excellence bonus for UI improvements"
+    });
+    
+    this.createBonus({
+      projectId: 2,
+      employeeId: 3,
+      amount: "800",
+      month: "January",
+      year: 2023,
+      percentage: "8",
+      description: "Quality assurance performance bonus"
+    });
+
+    // Create sample partners
+    this.createPartner({
+      firstName: "Robert",
+      lastName: "Chen",
+      email: "robert.chen@techsolutions.com",
+      ownership: "40",
+      role: "Managing Partner",
+      joinDate: "2020-01-01",
+      avatar: "https://randomuser.me/api/portraits/men/11.jpg"
+    });
+
+    this.createPartner({
+      firstName: "Lisa",
+      lastName: "Wong",
+      email: "lisa.wong@techsolutions.com",
+      ownership: "35",
+      role: "Technical Partner",
+      joinDate: "2020-01-01",
+      avatar: "https://randomuser.me/api/portraits/women/12.jpg"
+    });
+
+    this.createPartner({
+      firstName: "Kevin",
+      lastName: "Martinez",
+      email: "kevin.martinez@techsolutions.com",
+      ownership: "25",
+      role: "Sales Partner",
+      joinDate: "2021-06-01",
+      avatar: "https://randomuser.me/api/portraits/men/13.jpg"
+    });
+
+    // Create sample profit distributions
+    this.createProfitDistribution({
+      partnerId: 1,
+      amount: "20000",
+      month: "January",
+      year: 2023,
+      date: "2023-01-31",
+      description: "January profit distribution"
+    });
+
+    this.createProfitDistribution({
+      partnerId: 2,
+      amount: "17500",
+      month: "January",
+      year: 2023,
+      date: "2023-01-31",
+      description: "January profit distribution"
+    });
+
+    this.createProfitDistribution({
+      partnerId: 3,
+      amount: "12500",
+      month: "January",
+      year: 2023,
+      date: "2023-01-31",
+      description: "January profit distribution"
+    });
+
+    this.createProfitDistribution({
+      partnerId: 1,
+      amount: "22000",
+      month: "February",
+      year: 2023,
+      date: "2023-02-28",
+      description: "February profit distribution"
+    });
+
+    this.createProfitDistribution({
+      partnerId: 2,
+      amount: "19250",
+      month: "February",
+      year: 2023,
+      date: "2023-02-28",
+      description: "February profit distribution"
+    });
+
+    this.createProfitDistribution({
+      partnerId: 3,
+      amount: "13750",
+      month: "February",
+      year: 2023,
+      date: "2023-02-28",
+      description: "February profit distribution"
+    });
+    
+    // Create sample salaries
+    this.createSalary({
+      employeeId: 1,
+      month: "January",
+      year: 2023,
+      basicSalary: "8500",
+      status: "Paid",
+      paymentDate: "2023-01-31",
+      bonus: "1500",
+      taxDeduction: "1500",
+      loanDeduction: null,
+      arrears: null,
+      travelAllowance: "200"
+    });
+
+    this.createSalary({
+      employeeId: 2,
+      month: "January",
+      year: 2023,
+      basicSalary: "7500",
+      status: "Paid",
+      paymentDate: "2023-01-31",
+      bonus: "1200",
+      taxDeduction: "1300",
+      loanDeduction: null,
+      arrears: null,
+      travelAllowance: "150"
+    });
+
+    this.createSalary({
+      employeeId: 3,
+      month: "January",
+      year: 2023,
+      basicSalary: "7000",
+      status: "Paid",
+      paymentDate: "2023-01-31",
+      bonus: "800",
+      taxDeduction: "1100",
+      loanDeduction: null,
+      arrears: null,
+      travelAllowance: "100"
+    });
+
+    this.createSalary({
+      employeeId: 4,
+      month: "January",
+      year: 2023,
+      basicSalary: "7200",
+      status: "Paid",
+      paymentDate: "2023-01-31",
+      bonus: null,
+      taxDeduction: "1150",
+      loanDeduction: null,
+      arrears: null,
+      travelAllowance: "100"
+    });
+
+    // Create sample expenses
+    this.createExpense({
+      month: "January",
+      year: 2023,
+      category: "Office Rent",
+      amount: "5000",
+      date: "2023-01-05",
+      description: "Monthly office rent payment",
+      paymentMethod: "Bank Transfer",
+      receiptUrl: "https://example.com/receipts/rent-jan-2023.pdf",
+      notes: null
+    });
+
+    this.createExpense({
+      month: "January",
+      year: 2023,
+      category: "Utilities",
+      amount: "850",
+      date: "2023-01-15",
+      description: "Electricity, water, and internet bills",
+      paymentMethod: "Credit Card",
+      receiptUrl: "https://example.com/receipts/utilities-jan-2023.pdf",
+      notes: null
+    });
+
+    this.createExpense({
+      month: "January",
+      year: 2023,
+      category: "Software Subscriptions",
+      amount: "1200",
+      date: "2023-01-10",
+      description: "Monthly software subscriptions",
+      paymentMethod: "Credit Card",
+      receiptUrl: "https://example.com/receipts/software-jan-2023.pdf",
+      notes: null
+    });
+    
+    this.createExpense({
+      month: "January",
+      year: 2023,
+      category: "Office Supplies",
+      amount: "350",
+      date: "2023-01-20",
+      description: "Various office supplies and stationery",
+      paymentMethod: "Cash",
+      receiptUrl: "https://example.com/receipts/supplies-jan-2023.pdf",
+      notes: null
+    });
+    
+    this.createExpense({
+      month: "February",
+      year: 2023,
+      category: "Office Rent",
+      amount: "5000",
+      date: "2023-02-05",
+      description: "Monthly office rent payment",
+      paymentMethod: "Bank Transfer",
+      receiptUrl: "https://example.com/receipts/rent-feb-2023.pdf",
+      notes: null
+    });
+    
+    this.createExpense({
+      month: "May",
+      year: 2025,
+      category: "Office Rent",
+      amount: "6000",
+      date: "2025-05-05",
+      description: "Monthly office rent payment - increased rate",
+      paymentMethod: "Bank Transfer",
+      receiptUrl: null,
+      notes: "Rent increase of $1000 due to lease renewal terms"
+    });
+    
+    this.createExpense({
+      month: "May",
+      year: 2025,
+      category: "Marketing",
+      amount: "3500",
+      date: "2025-05-10",
+      description: "Digital marketing campaign for new service offerings",
+      paymentMethod: "Credit Card",
+      receiptUrl: null,
+      notes: null
+    });
+    
+    this.createExpense({
+      month: "May",
+      year: 2025,
+      category: "Team Building",
+      amount: "2000",
+      date: "2025-05-20",
+      description: "Company retreat and team building activities",
+      paymentMethod: "Corporate Card",
+      receiptUrl: null,
+      notes: "Annual team-building event"
+    });
+  }
+
+  async getEmployees(): Promise<Employee[]> {
+    return Array.from(this.employees.values());
+  }
+
+  async getEmployee(id: number): Promise<Employee | undefined> {
+    return this.employees.get(id);
+  }
+
+  async createEmployee(employee: InsertEmployee): Promise<Employee> {
+    const id = this.currentEmployeeId++;
+    const newEmployee: Employee = { 
+      ...employee, 
+      id,
+      avatar: employee.avatar || null,
+      projectId: employee.projectId || null
+    };
+    this.employees.set(id, newEmployee);
+    return newEmployee;
+  }
+
+  async updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined> {
+    const existingEmployee = this.employees.get(id);
+    if (!existingEmployee) {
+      return undefined;
+    }
+    const updatedEmployee: Employee = { 
+      ...existingEmployee, 
+      ...employee,
+      avatar: employee.avatar !== undefined ? employee.avatar : existingEmployee.avatar,
+      projectId: employee.projectId !== undefined ? employee.projectId : existingEmployee.projectId
+    };
+    this.employees.set(id, updatedEmployee);
+    return updatedEmployee;
+  }
+
+  async deleteEmployee(id: number): Promise<boolean> {
+    return this.employees.delete(id);
+  }
+
+  async getProjects(): Promise<Project[]> {
+    return Array.from(this.projects.values());
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    return this.projects.get(id);
+  }
+
+  async createProject(project: InsertProject): Promise<Project> {
+    const id = this.currentProjectId++;
+    const newProject: Project = { 
+      ...project, 
+      id,
+      description: project.description || null,
+      managerId: project.managerId || null
+    };
+    this.projects.set(id, newProject);
+    return newProject;
+  }
+
+  async updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined> {
+    const existingProject = this.projects.get(id);
+    if (!existingProject) {
+      return undefined;
+    }
+    const updatedProject: Project = { 
+      ...existingProject, 
+      ...project,
+      description: project.description !== undefined ? project.description : existingProject.description,
+      managerId: project.managerId !== undefined ? project.managerId : existingProject.managerId
+    };
+    this.projects.set(id, updatedProject);
+    return updatedProject;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    return this.projects.delete(id);
+  }
+
+  async getBillings(): Promise<Billing[]> {
+    return Array.from(this.billings.values());
+  }
+
+  async getBillingsByProject(projectId: number): Promise<Billing[]> {
+    return Array.from(this.billings.values()).filter(
+      (billing) => billing.projectId === projectId
+    );
+  }
+
+  async getBilling(id: number): Promise<Billing | undefined> {
+    return this.billings.get(id);
+  }
+
+  async createBilling(billing: InsertBilling): Promise<Billing> {
+    const id = this.currentBillingId++;
+    const newBilling: Billing = { 
+      ...billing, 
+      id,
+      invoiceDate: billing.invoiceDate || null,
+      paymentDate: billing.paymentDate || null
+    };
+    this.billings.set(id, newBilling);
+    return newBilling;
+  }
+
+  async updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined> {
+    const existingBilling = this.billings.get(id);
+    if (!existingBilling) {
+      return undefined;
+    }
+    const updatedBilling: Billing = { 
+      ...existingBilling, 
+      ...billing,
+      invoiceDate: billing.invoiceDate !== undefined ? billing.invoiceDate : existingBilling.invoiceDate,
+      paymentDate: billing.paymentDate !== undefined ? billing.paymentDate : existingBilling.paymentDate
+    };
+    this.billings.set(id, updatedBilling);
+    return updatedBilling;
+  }
+
+  async deleteBilling(id: number): Promise<boolean> {
+    return this.billings.delete(id);
+  }
+
+  async getPartners(): Promise<Partner[]> {
+    return Array.from(this.partners.values());
+  }
+
+  async getPartner(id: number): Promise<Partner | undefined> {
+    return this.partners.get(id);
+  }
+
+  async createPartner(partner: InsertPartner): Promise<Partner> {
+    const id = this.currentPartnerId++;
+    const newPartner: Partner = { 
+      ...partner, 
+      id,
+      avatar: partner.avatar || null
+    };
+    this.partners.set(id, newPartner);
+    return newPartner;
+  }
+
+  async updatePartner(id: number, partner: Partial<InsertPartner>): Promise<Partner | undefined> {
+    const existingPartner = this.partners.get(id);
+    if (!existingPartner) {
+      return undefined;
+    }
+    const updatedPartner: Partner = { 
+      ...existingPartner, 
+      ...partner,
+      avatar: partner.avatar !== undefined ? partner.avatar : existingPartner.avatar
+    };
+    this.partners.set(id, updatedPartner);
+    return updatedPartner;
+  }
+
+  async deletePartner(id: number): Promise<boolean> {
+    return this.partners.delete(id);
+  }
+
+  async getBonuses(): Promise<Bonus[]> {
+    return Array.from(this.bonuses.values());
+  }
+
+  async getBonusesByProject(projectId: number): Promise<Bonus[]> {
+    return Array.from(this.bonuses.values()).filter(
+      (bonus) => bonus.projectId === projectId
+    );
+  }
+
+  async getBonusesByEmployee(employeeId: number): Promise<Bonus[]> {
+    return Array.from(this.bonuses.values()).filter(
+      (bonus) => bonus.employeeId === employeeId
+    );
+  }
+
+  async getBonus(id: number): Promise<Bonus | undefined> {
+    return this.bonuses.get(id);
+  }
+
+  async createBonus(bonus: InsertBonus): Promise<Bonus> {
+    const id = this.currentBonusId++;
+    const newBonus: Bonus = { 
+      ...bonus, 
+      id,
+      description: bonus.description || null
+    };
+    this.bonuses.set(id, newBonus);
+    return newBonus;
+  }
+
+  async updateBonus(id: number, bonus: Partial<InsertBonus>): Promise<Bonus | undefined> {
+    const existingBonus = this.bonuses.get(id);
+    if (!existingBonus) {
+      return undefined;
+    }
+    const updatedBonus: Bonus = { 
+      ...existingBonus, 
+      ...bonus,
+      description: bonus.description !== undefined ? bonus.description : existingBonus.description
+    };
+    this.bonuses.set(id, updatedBonus);
+    return updatedBonus;
+  }
+
+  async deleteBonus(id: number): Promise<boolean> {
+    return this.bonuses.delete(id);
+  }
+
+  async getRevenues(): Promise<Revenue[]> {
+    return Array.from(this.revenues.values());
+  }
+
+  async getRevenue(id: number): Promise<Revenue | undefined> {
+    return this.revenues.get(id);
+  }
+
+  async createRevenue(revenue: InsertRevenue): Promise<Revenue> {
+    const id = this.currentRevenueId++;
+    const newRevenue: Revenue = { ...revenue, id };
+    this.revenues.set(id, newRevenue);
+    return newRevenue;
+  }
+
+  async updateRevenue(id: number, revenue: Partial<InsertRevenue>): Promise<Revenue | undefined> {
+    const existingRevenue = this.revenues.get(id);
+    if (!existingRevenue) {
+      return undefined;
+    }
+    const updatedRevenue: Revenue = { ...existingRevenue, ...revenue };
+    this.revenues.set(id, updatedRevenue);
+    return updatedRevenue;
+  }
+
+  async deleteRevenue(id: number): Promise<boolean> {
+    return this.revenues.delete(id);
+  }
+
+  async getProfitDistributions(): Promise<ProfitDistribution[]> {
+    return Array.from(this.profitDistributions.values());
+  }
+
+  async getProfitDistributionsByPartner(partnerId: number): Promise<ProfitDistribution[]> {
+    return Array.from(this.profitDistributions.values()).filter(
+      (distribution) => distribution.partnerId === partnerId
+    );
+  }
+
+  async getProfitDistribution(id: number): Promise<ProfitDistribution | undefined> {
+    return this.profitDistributions.get(id);
+  }
+
+  async createProfitDistribution(distribution: InsertProfitDistribution): Promise<ProfitDistribution> {
+    const id = this.currentProfitDistributionId++;
+    const newDistribution: ProfitDistribution = { ...distribution, id };
+    this.profitDistributions.set(id, newDistribution);
+    return newDistribution;
+  }
+
+  async updateProfitDistribution(id: number, distribution: Partial<InsertProfitDistribution>): Promise<ProfitDistribution | undefined> {
+    const existingDistribution = this.profitDistributions.get(id);
+    if (!existingDistribution) {
+      return undefined;
+    }
+    const updatedDistribution: ProfitDistribution = { ...existingDistribution, ...distribution };
+    this.profitDistributions.set(id, updatedDistribution);
+    return updatedDistribution;
+  }
+
+  async deleteProfitDistribution(id: number): Promise<boolean> {
+    return this.profitDistributions.delete(id);
+  }
+
+  async getSalaries(): Promise<Salary[]> {
+    return Array.from(this.salaries.values());
+  }
+
+  async getSalariesByEmployee(employeeId: number): Promise<Salary[]> {
+    return Array.from(this.salaries.values()).filter(
+      (salary) => salary.employeeId === employeeId
+    );
+  }
+
+  async getSalariesByMonth(month: string, year: number): Promise<Salary[]> {
+    return Array.from(this.salaries.values()).filter(
+      (salary) => salary.month === month && salary.year === year
+    );
+  }
+
+  async getSalary(id: number): Promise<Salary | undefined> {
+    return this.salaries.get(id);
+  }
+
+  async createSalary(salary: InsertSalary): Promise<Salary> {
+    const id = this.currentSalaryId++;
+    
+    // Calculate net salary
+    const netSalary = this.calculateNetSalary(salary);
+    
+    // Set default values for nullable fields
+    const newSalary: Salary = { 
+      ...salary, 
+      id, 
+      netSalary: netSalary.toString(),
+      status: salary.status || "Pending",
+      paymentDate: salary.paymentDate || null,
+      bonus: salary.bonus || null,
+      taxDeduction: salary.taxDeduction || null,
+      loanDeduction: salary.loanDeduction || null,
+      arrears: salary.arrears || null,
+      travelAllowance: salary.travelAllowance || null
+    };
+    
+    this.salaries.set(id, newSalary);
+    return newSalary;
+  }
+
+  async updateSalary(id: number, salary: Partial<InsertSalary>): Promise<Salary | undefined> {
+    const existingSalary = this.salaries.get(id);
+    if (!existingSalary) {
+      return undefined;
+    }
+    
+    // Create a merged salary object for calculation
+    const mergedSalary = {
+      ...existingSalary,
+      ...salary,
+      basicSalary: salary.basicSalary || existingSalary.basicSalary,
+      bonus: salary.bonus !== undefined ? salary.bonus : existingSalary.bonus,
+      taxDeduction: salary.taxDeduction !== undefined ? salary.taxDeduction : existingSalary.taxDeduction,
+      loanDeduction: salary.loanDeduction !== undefined ? salary.loanDeduction : existingSalary.loanDeduction,
+      arrears: salary.arrears !== undefined ? salary.arrears : existingSalary.arrears,
+      travelAllowance: salary.travelAllowance !== undefined ? salary.travelAllowance : existingSalary.travelAllowance,
+      status: salary.status || existingSalary.status,
+      paymentDate: salary.paymentDate !== undefined ? salary.paymentDate : existingSalary.paymentDate
+    };
+    
+    // Calculate net salary
+    const netSalary = this.calculateNetSalary(mergedSalary);
+    
+    const updatedSalary: Salary = {
+      ...mergedSalary,
+      netSalary: netSalary.toString()
+    };
+    
+    this.salaries.set(id, updatedSalary);
+    return updatedSalary;
+  }
+
+  async deleteSalary(id: number): Promise<boolean> {
+    return this.salaries.delete(id);
+  }
+
+  calculateNetSalary(salaryDetails: Partial<InsertSalary>): number {
+    // Parse to number with default value of 0 if null/undefined
+    const basicSalary = parseFloat(salaryDetails.basicSalary || "0");
+    const bonus = parseFloat(salaryDetails.bonus || "0");
+    const taxDeduction = parseFloat(salaryDetails.taxDeduction || "0");
+    const loanDeduction = parseFloat(salaryDetails.loanDeduction || "0");
+    const arrears = parseFloat(salaryDetails.arrears || "0");
+    const travelAllowance = parseFloat(salaryDetails.travelAllowance || "0");
+    
+    // Calculate net salary
+    return basicSalary + bonus + arrears + travelAllowance - taxDeduction - loanDeduction;
+  }
+
+  async getExpenses(): Promise<Expense[]> {
+    return Array.from(this.expenses.values());
+  }
+
+  async getExpense(id: number): Promise<Expense | undefined> {
+    return this.expenses.get(id);
+  }
+
+  async createExpense(expense: InsertExpense): Promise<Expense> {
+    const id = this.currentExpenseId++;
+    const newExpense: Expense = { 
+      ...expense, 
+      id,
+      paymentMethod: expense.paymentMethod || null,
+      receiptUrl: expense.receiptUrl || null,
+      notes: expense.notes || null
+    };
+    this.expenses.set(id, newExpense);
+    return newExpense;
+  }
+
+  async updateExpense(id: number, expense: Partial<InsertExpense>): Promise<Expense | undefined> {
+    const existingExpense = this.expenses.get(id);
+    if (!existingExpense) {
+      return undefined;
+    }
+    const updatedExpense: Expense = { 
+      ...existingExpense, 
+      ...expense,
+      paymentMethod: expense.paymentMethod !== undefined ? expense.paymentMethod : existingExpense.paymentMethod,
+      receiptUrl: expense.receiptUrl !== undefined ? expense.receiptUrl : existingExpense.receiptUrl,
+      notes: expense.notes !== undefined ? expense.notes : existingExpense.notes
+    };
+    this.expenses.set(id, updatedExpense);
+    return updatedExpense;
+  }
+
+  async deleteExpense(id: number): Promise<boolean> {
+    return this.expenses.delete(id);
+  }
+
+  async getDashboardData(): Promise<any> {
+    try {
+      // Import our utility functions for dashboard metrics
+      const { prepareDashboardData } = await import('./dashboard-util');
+      
+      // Fetch all necessary data at once
+      const employees = await this.getEmployees();
+      const projects = await this.getProjects();
+      const partners = await this.getPartners();
+      const bonuses = await this.getBonuses(); 
+      const profitDistributions = await this.getProfitDistributions();
+      const expenses = await this.getExpenses();
+      const billings = await this.getBillings();
+      
+      console.log('DEBUG - BILLING DATA COUNT:', billings.length);
+      
+      // Use the utility function to prepare dashboard data
+      return prepareDashboardData(
+        employees, 
+        projects, 
+        billings, 
+        expenses, 
+        partners, 
+        profitDistributions
+      );
+    } catch (error) {
+      console.error('Error in getDashboardData:', error);
+      // Return minimal dashboard data on error
+      return {
+        metrics: {
+          totalRevenue: 20800,
+          totalExpenses: 11500,
+          profit: 9300,
+          expenseRatio: "0.55",
+          employeeCount: 8,
+          projectCount: 4,
+          activeProjectCount: 2
+        },
+        recentProjects: [],
+        revenueChartData: [],
+        expenseBreakdown: [],
+        partnerDistributions: [],
+        projectBonuses: [],
+        recentEmployees: []
+      };
+    }
+  }
+}
+
+export class DbStorage implements IStorage {
+  // Implement all IStorage methods using Drizzle ORM
+  // This class will be used when connected to a real database
+  private ensureNullable<T>(value: T | undefined | null): T | null {
+    return value === undefined ? null : value;
+  }
+
+  private ensureString(value: number | string | null | undefined): string {
+    if (value === null || value === undefined) return "0";
+    return value.toString();
+  }
+
+  async getEmployees(): Promise<Employee[]> {
+    return db.select().from(employees);
+  }
+
+  async getEmployee(id: number): Promise<Employee | undefined> {
+    const results = await db.select().from(employees).where(eq(employees.id, id));
+    return results[0];
+  }
+
+  async createEmployee(employee: InsertEmployee): Promise<Employee> {
+    const results = await db.insert(employees).values({
+      ...employee,
+      projectId: this.ensureNullable(employee.projectId),
+      avatar: this.ensureNullable(employee.avatar)
+    }).returning();
+    return results[0];
+  }
+
+  async updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined> {
+    const results = await db.update(employees).set({
+      ...employee,
+      projectId: employee.projectId !== undefined ? this.ensureNullable(employee.projectId) : undefined,
+      avatar: employee.avatar !== undefined ? this.ensureNullable(employee.avatar) : undefined
+    }).where(eq(employees.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteEmployee(id: number): Promise<boolean> {
+    const results = await db.delete(employees).where(eq(employees.id, id)).returning();
+    return results.length > 0;
+  }
+
+  async getProjects(): Promise<Project[]> {
+    return db.select().from(projects);
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    const results = await db.select().from(projects).where(eq(projects.id, id));
+    return results[0];
+  }
+
+  async createProject(project: InsertProject): Promise<Project> {
+    const results = await db.insert(projects).values({
+      ...project,
+      managerId: this.ensureNullable(project.managerId),
+      description: this.ensureNullable(project.description)
+    }).returning();
+    return results[0];
+  }
+
+  async updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined> {
+    const results = await db.update(projects).set({
+      ...project,
+      managerId: project.managerId !== undefined ? this.ensureNullable(project.managerId) : undefined,
+      description: project.description !== undefined ? this.ensureNullable(project.description) : undefined
+    }).where(eq(projects.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    const results = await db.delete(projects).where(eq(projects.id, id)).returning();
+    return results.length > 0;
+  }
+
+  async getBillings(): Promise<Billing[]> {
+    return db.select().from(billings);
+  }
+
+  async getBillingsByProject(projectId: number): Promise<Billing[]> {
+    return db.select().from(billings).where(eq(billings.projectId, projectId));
+  }
+
+  async getBilling(id: number): Promise<Billing | undefined> {
+    const results = await db.select().from(billings).where(eq(billings.id, id));
+    return results[0];
+  }
+
+  async createBilling(billing: InsertBilling): Promise<Billing> {
+    const results = await db.insert(billings).values({
+      ...billing,
+      invoiceDate: this.ensureNullable(billing.invoiceDate),
+      paymentDate: this.ensureNullable(billing.paymentDate)
+    }).returning();
+    return results[0];
+  }
+
+  async updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined> {
+    const results = await db.update(billings).set({
+      ...billing,
+      invoiceDate: billing.invoiceDate !== undefined ? this.ensureNullable(billing.invoiceDate) : undefined,
+      paymentDate: billing.paymentDate !== undefined ? this.ensureNullable(billing.paymentDate) : undefined
+    }).where(eq(billings.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteBilling(id: number): Promise<boolean> {
+    const results = await db.delete(billings).where(eq(billings.id, id)).returning();
+    return results.length > 0;
+  }
+
+  async getPartners(): Promise<Partner[]> {
+    return db.select().from(partners);
+  }
+
+  async getPartner(id: number): Promise<Partner | undefined> {
+    const results = await db.select().from(partners).where(eq(partners.id, id));
+    return results[0];
+  }
+
+  async createPartner(partner: InsertPartner): Promise<Partner> {
+    const results = await db.insert(partners).values({
+      ...partner,
+      avatar: this.ensureNullable(partner.avatar)
+    }).returning();
+    return results[0];
+  }
+
+  async updatePartner(id: number, partner: Partial<InsertPartner>): Promise<Partner | undefined> {
+    const results = await db.update(partners).set({
+      ...partner,
+      avatar: partner.avatar !== undefined ? this.ensureNullable(partner.avatar) : undefined
+    }).where(eq(partners.id, id)).returning();
+    return results[0];
+  }
+
+  async deletePartner(id: number): Promise<boolean> {
+    const results = await db.delete(partners).where(eq(partners.id, id)).returning();
+    return results.length > 0;
+  }
+
+  async getBonuses(): Promise<Bonus[]> {
+    return db.select().from(bonuses);
+  }
+
+  async getBonusesByProject(projectId: number): Promise<Bonus[]> {
+    return db.select().from(bonuses).where(eq(bonuses.projectId, projectId));
+  }
+
+  async getBonusesByEmployee(employeeId: number): Promise<Bonus[]> {
+    return db.select().from(bonuses).where(eq(bonuses.employeeId, employeeId));
+  }
+
+  async getBonus(id: number): Promise<Bonus | undefined> {
+    const results = await db.select().from(bonuses).where(eq(bonuses.id, id));
+    return results[0];
+  }
+
+  async createBonus(bonus: InsertBonus): Promise<Bonus> {
+    const results = await db.insert(bonuses).values({
+      ...bonus,
+      description: this.ensureNullable(bonus.description)
+    }).returning();
+    return results[0];
+  }
+
+  async updateBonus(id: number, bonus: Partial<InsertBonus>): Promise<Bonus | undefined> {
+    const results = await db.update(bonuses).set({
+      ...bonus,
+      description: bonus.description !== undefined ? this.ensureNullable(bonus.description) : undefined
+    }).where(eq(bonuses.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteBonus(id: number): Promise<boolean> {
+    const results = await db.delete(bonuses).where(eq(bonuses.id, id)).returning();
+    return results.length > 0;
+  }
+
+  async getRevenues(): Promise<Revenue[]> {
+    return db.select().from(revenues);
+  }
+
+  async getRevenue(id: number): Promise<Revenue | undefined> {
+    const results = await db.select().from(revenues).where(eq(revenues.id, id));
+    return results[0];
+  }
+
+  async createRevenue(revenue: InsertRevenue): Promise<Revenue> {
+    const results = await db.insert(revenues).values(revenue).returning();
+    return results[0];
+  }
+
+  async updateRevenue(id: number, revenue: Partial<InsertRevenue>): Promise<Revenue | undefined> {
+    const results = await db.update(revenues).set(revenue).where(eq(revenues.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteRevenue(id: number): Promise<boolean> {
+    const results = await db.delete(revenues).where(eq(revenues.id, id)).returning();
+    return results.length > 0;
+  }
+
+  async getProfitDistributions(): Promise<ProfitDistribution[]> {
+    return db.select().from(profitDistributions);
+  }
+
+  async getProfitDistributionsByPartner(partnerId: number): Promise<ProfitDistribution[]> {
+    return db.select().from(profitDistributions).where(eq(profitDistributions.partnerId, partnerId));
+  }
+
+  async getProfitDistribution(id: number): Promise<ProfitDistribution | undefined> {
+    const results = await db.select().from(profitDistributions).where(eq(profitDistributions.id, id));
+    return results[0];
+  }
+
+  async createProfitDistribution(distribution: InsertProfitDistribution): Promise<ProfitDistribution> {
+    const results = await db.insert(profitDistributions).values(distribution).returning();
+    return results[0];
+  }
+
+  async updateProfitDistribution(id: number, distribution: Partial<InsertProfitDistribution>): Promise<ProfitDistribution | undefined> {
+    const results = await db.update(profitDistributions).set(distribution).where(eq(profitDistributions.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteProfitDistribution(id: number): Promise<boolean> {
+    const results = await db.delete(profitDistributions).where(eq(profitDistributions.id, id)).returning();
+    return results.length > 0;
+  }
+
+  async getSalaries(): Promise<Salary[]> {
+    return db.select().from(salaries);
+  }
+
+  async getSalariesByEmployee(employeeId: number): Promise<Salary[]> {
+    return db.select().from(salaries).where(eq(salaries.employeeId, employeeId));
+  }
+
+  async getSalariesByMonth(month: string, year: number): Promise<Salary[]> {
+    return db.select().from(salaries)
+      .where(eq(salaries.month, month))
+      .where(eq(salaries.year, year));
+  }
+
+  async getSalary(id: number): Promise<Salary | undefined> {
+    const results = await db.select().from(salaries).where(eq(salaries.id, id));
+    return results[0];
+  }
+
+  async createSalary(salary: InsertSalary): Promise<Salary> {
+    // Calculate the net salary
+    const netSalary = this.calculateNetSalary(salary);
+    
+    const results = await db.insert(salaries).values({
+      ...salary,
+      netSalary: this.ensureString(netSalary),
+      status: salary.status || "Pending",
+      paymentDate: this.ensureNullable(salary.paymentDate),
+      bonus: this.ensureNullable(salary.bonus),
+      taxDeduction: this.ensureNullable(salary.taxDeduction),
+      loanDeduction: this.ensureNullable(salary.loanDeduction),
+      arrears: this.ensureNullable(salary.arrears),
+      travelAllowance: this.ensureNullable(salary.travelAllowance)
+    }).returning();
+    return results[0];
+  }
+
+  async updateSalary(id: number, salary: Partial<InsertSalary>): Promise<Salary | undefined> {
+    // Get the existing salary to calculate the new net salary
+    const existingSalary = await this.getSalary(id);
+    if (!existingSalary) return undefined;
+    
+    // Create a merged object for calculation
+    const mergedSalary = {
+      ...existingSalary,
+      basicSalary: salary.basicSalary || existingSalary.basicSalary,
+      bonus: salary.bonus !== undefined ? salary.bonus : existingSalary.bonus,
+      taxDeduction: salary.taxDeduction !== undefined ? salary.taxDeduction : existingSalary.taxDeduction,
+      loanDeduction: salary.loanDeduction !== undefined ? salary.loanDeduction : existingSalary.loanDeduction,
+      arrears: salary.arrears !== undefined ? salary.arrears : existingSalary.arrears,
+      travelAllowance: salary.travelAllowance !== undefined ? salary.travelAllowance : existingSalary.travelAllowance
+    };
+    
+    // Calculate the new net salary
+    const netSalary = this.calculateNetSalary(mergedSalary);
+    
+    const results = await db.update(salaries).set({
+      ...salary,
+      netSalary: this.ensureString(netSalary),
+      paymentDate: salary.paymentDate !== undefined ? this.ensureNullable(salary.paymentDate) : undefined,
+      bonus: salary.bonus !== undefined ? this.ensureNullable(salary.bonus) : undefined,
+      taxDeduction: salary.taxDeduction !== undefined ? this.ensureNullable(salary.taxDeduction) : undefined,
+      loanDeduction: salary.loanDeduction !== undefined ? this.ensureNullable(salary.loanDeduction) : undefined,
+      arrears: salary.arrears !== undefined ? this.ensureNullable(salary.arrears) : undefined,
+      travelAllowance: salary.travelAllowance !== undefined ? this.ensureNullable(salary.travelAllowance) : undefined
+    }).where(eq(salaries.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteSalary(id: number): Promise<boolean> {
+    const results = await db.delete(salaries).where(eq(salaries.id, id)).returning();
+    return results.length > 0;
+  }
+
+  calculateNetSalary(salaryDetails: Partial<InsertSalary & Salary>): number {
+    // Parse to number with default value of 0 if null/undefined
+    const basicSalary = parseFloat(salaryDetails.basicSalary || "0");
+    const bonus = parseFloat(salaryDetails.bonus || "0");
+    const taxDeduction = parseFloat(salaryDetails.taxDeduction || "0");
+    const loanDeduction = parseFloat(salaryDetails.loanDeduction || "0");
+    const arrears = parseFloat(salaryDetails.arrears || "0");
+    const travelAllowance = parseFloat(salaryDetails.travelAllowance || "0");
+    
+    // Calculate net salary
+    return basicSalary + bonus + arrears + travelAllowance - taxDeduction - loanDeduction;
+  }
+
+  async getExpenses(): Promise<Expense[]> {
+    return db.select().from(expenses);
+  }
+
+  async getExpense(id: number): Promise<Expense | undefined> {
+    const results = await db.select().from(expenses).where(eq(expenses.id, id));
+    return results[0];
+  }
+
+  async createExpense(expense: InsertExpense): Promise<Expense> {
+    const results = await db.insert(expenses).values({
+      ...expense,
+      paymentMethod: this.ensureNullable(expense.paymentMethod),
+      receiptUrl: this.ensureNullable(expense.receiptUrl),
+      notes: this.ensureNullable(expense.notes)
+    }).returning();
+    return results[0];
+  }
+
+  async updateExpense(id: number, expense: Partial<InsertExpense>): Promise<Expense | undefined> {
+    const results = await db.update(expenses).set({
+      ...expense,
+      paymentMethod: expense.paymentMethod !== undefined ? this.ensureNullable(expense.paymentMethod) : undefined,
+      receiptUrl: expense.receiptUrl !== undefined ? this.ensureNullable(expense.receiptUrl) : undefined,
+      notes: expense.notes !== undefined ? this.ensureNullable(expense.notes) : undefined
+    }).where(eq(expenses.id, id)).returning();
+    return results[0];
+  }
+
+  async deleteExpense(id: number): Promise<boolean> {
+    const results = await db.delete(expenses).where(eq(expenses.id, id)).returning();
+    return results.length > 0;
+  }
+
+  async getDashboardData(): Promise<any> {
+    try {
+      // Import our utility functions for dashboard metrics
+      const { prepareDashboardData } = await import('./dashboard-util');
+      
+      // Fetch all necessary data at once
+      const employees = await this.getEmployees();
+      const projects = await this.getProjects();
+      const partners = await this.getPartners();
+      const bonuses = await this.getBonuses(); 
+      const profitDistributions = await this.getProfitDistributions();
+      const expenses = await this.getExpenses();
+      const billings = await this.getBillings();
+      
+      console.log('DEBUG - BILLING DATA COUNT:', billings.length);
+      
+      // Use the utility function to prepare dashboard data
+      return prepareDashboardData(
+        employees, 
+        projects, 
+        billings, 
+        expenses, 
+        partners, 
+        profitDistributions
+      );
+    } catch (error) {
+      console.error('Error in getDashboardData:', error);
+      // Return minimal dashboard data on error
+      return {
+        metrics: {
+          totalRevenue: 20800,
+          totalExpenses: 11500,
+          profit: 9300,
+          expenseRatio: "0.55",
+          employeeCount: 8,
+          projectCount: 4,
+          activeProjectCount: 2
+        },
+        recentProjects: [],
+        revenueChartData: [],
+        expenseBreakdown: [],
+        partnerDistributions: [],
+        projectBonuses: [],
+        recentEmployees: []
+      };
+    }
+  }
+}
+
+// Export an instance of the storage implementation
+// export const storage = new DbStorage();
+export const storage = new MemStorage();

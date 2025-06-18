@@ -1,0 +1,1072 @@
+import { 
+  employees, type Employee, type InsertEmployee,
+  projects, type Project, type InsertProject,
+  billings, type Billing, type InsertBilling,
+  partners, type Partner, type InsertPartner,
+  bonuses, type Bonus, type InsertBonus,
+  revenues, type Revenue, type InsertRevenue,
+  profitDistributions, type ProfitDistribution, type InsertProfitDistribution,
+  salaries, type Salary, type InsertSalary,
+  expenses, type Expense, type InsertExpense
+} from "@shared/schema";
+
+export interface IStorage {
+  // Employee operations
+  getEmployees(): Promise<Employee[]>;
+  getEmployee(id: number): Promise<Employee | undefined>;
+  createEmployee(employee: InsertEmployee): Promise<Employee>;
+  updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined>;
+  deleteEmployee(id: number): Promise<boolean>;
+
+  // Project operations
+  getProjects(): Promise<Project[]>;
+  getProject(id: number): Promise<Project | undefined>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined>;
+  deleteProject(id: number): Promise<boolean>;
+
+  // Billing operations
+  getBillings(): Promise<Billing[]>;
+  getBillingsByProject(projectId: number): Promise<Billing[]>;
+  getBilling(id: number): Promise<Billing | undefined>;
+  createBilling(billing: InsertBilling): Promise<Billing>;
+  updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined>;
+  deleteBilling(id: number): Promise<boolean>;
+
+  // Partner operations
+  getPartners(): Promise<Partner[]>;
+  getPartner(id: number): Promise<Partner | undefined>;
+  createPartner(partner: InsertPartner): Promise<Partner>;
+  updatePartner(id: number, partner: Partial<InsertPartner>): Promise<Partner | undefined>;
+  deletePartner(id: number): Promise<boolean>;
+
+  // Bonus operations
+  getBonuses(): Promise<Bonus[]>;
+  getBonusesByProject(projectId: number): Promise<Bonus[]>;
+  getBonusesByEmployee(employeeId: number): Promise<Bonus[]>;
+  getBonus(id: number): Promise<Bonus | undefined>;
+  createBonus(bonus: InsertBonus): Promise<Bonus>;
+  updateBonus(id: number, bonus: Partial<InsertBonus>): Promise<Bonus | undefined>;
+  deleteBonus(id: number): Promise<boolean>;
+
+  // Revenue operations
+  getRevenues(): Promise<Revenue[]>;
+  getRevenue(id: number): Promise<Revenue | undefined>;
+  createRevenue(revenue: InsertRevenue): Promise<Revenue>;
+  updateRevenue(id: number, revenue: Partial<InsertRevenue>): Promise<Revenue | undefined>;
+  deleteRevenue(id: number): Promise<boolean>;
+
+  // Profit Distribution operations
+  getProfitDistributions(): Promise<ProfitDistribution[]>;
+  getProfitDistributionsByPartner(partnerId: number): Promise<ProfitDistribution[]>;
+  getProfitDistribution(id: number): Promise<ProfitDistribution | undefined>;
+  createProfitDistribution(distribution: InsertProfitDistribution): Promise<ProfitDistribution>;
+  updateProfitDistribution(id: number, distribution: Partial<InsertProfitDistribution>): Promise<ProfitDistribution | undefined>;
+  deleteProfitDistribution(id: number): Promise<boolean>;
+
+  // Salary operations
+  getSalaries(): Promise<Salary[]>;
+  getSalariesByEmployee(employeeId: number): Promise<Salary[]>;
+  getSalariesByMonth(month: string, year: number): Promise<Salary[]>;
+  getSalary(id: number): Promise<Salary | undefined>;
+  createSalary(salary: InsertSalary): Promise<Salary>;
+  updateSalary(id: number, salary: Partial<InsertSalary>): Promise<Salary | undefined>;
+  deleteSalary(id: number): Promise<boolean>;
+  calculateNetSalary(salaryDetails: Partial<InsertSalary>): number;
+
+  // Expense operations
+  getExpenses(): Promise<Expense[]>;
+  getExpense(id: number): Promise<Expense | undefined>;
+  createExpense(expense: InsertExpense): Promise<Expense>;
+  updateExpense(id: number, expense: Partial<InsertExpense>): Promise<Expense | undefined>;
+  deleteExpense(id: number): Promise<boolean>;
+
+  // Dashboard data operations
+  getDashboardData(): Promise<any>;
+}
+
+export class MemStorage implements IStorage {
+  private employees: Map<number, Employee>;
+  private projects: Map<number, Project>;
+  private billings: Map<number, Billing>;
+  private partners: Map<number, Partner>;
+  private bonuses: Map<number, Bonus>;
+  private revenues: Map<number, Revenue>;
+  private profitDistributions: Map<number, ProfitDistribution>;
+  private salaries: Map<number, Salary>;
+  private expenses: Map<number, Expense>;
+  
+  private currentEmployeeId: number;
+  private currentProjectId: number;
+  private currentBillingId: number;
+  private currentPartnerId: number;
+  private currentBonusId: number;
+  private currentRevenueId: number;
+  private currentProfitDistributionId: number;
+  private currentSalaryId: number;
+  private currentExpenseId: number;
+
+  constructor() {
+    this.employees = new Map();
+    this.projects = new Map();
+    this.billings = new Map();
+    this.partners = new Map();
+    this.bonuses = new Map();
+    this.revenues = new Map();
+    this.profitDistributions = new Map();
+    this.salaries = new Map();
+    this.expenses = new Map();
+    
+    this.currentEmployeeId = 1;
+    this.currentProjectId = 1;
+    this.currentBillingId = 1;
+    this.currentPartnerId = 1;
+    this.currentBonusId = 1;
+    this.currentRevenueId = 1;
+    this.currentProfitDistributionId = 1;
+    this.currentSalaryId = 1;
+    this.currentExpenseId = 1;
+    
+    // Initialize with some sample data
+    this.initializeSampleData();
+  }
+
+  private initializeSampleData() {
+    // Create sample partners
+    this.createPartner({
+      name: "Partner A",
+      email: "partnera@example.com",
+      share: 40
+    });
+    
+    this.createPartner({
+      name: "Partner B",
+      email: "partnerb@example.com",
+      share: 35
+    });
+    
+    this.createPartner({
+      name: "Partner C",
+      email: "partnerc@example.com",
+      share: 25
+    });
+
+    // Create sample projects
+    this.createProject({
+      name: "E-commerce Platform Redesign",
+      client: "XYZ Corporation",
+      status: "Active",
+      progress: 75,
+      deadline: "Nov 15, 2023",
+      value: 45000,
+      managerId: 4,
+      description: "Redesigning the e-commerce platform for better user experience"
+    });
+    
+    this.createProject({
+      name: "Mobile App Development",
+      client: "ABC Inc.",
+      status: "In Progress",
+      progress: 45,
+      deadline: "Dec 20, 2023",
+      value: 60000,
+      managerId: 2,
+      description: "Developing a mobile app for client's business"
+    });
+    
+    this.createProject({
+      name: "CRM System Integration",
+      client: "Global Solutions",
+      status: "Planning",
+      progress: 15,
+      deadline: "Jan 30, 2024",
+      value: 38000,
+      managerId: 4,
+      description: "Integrating CRM system with existing infrastructure"
+    });
+    
+    this.createProject({
+      name: "Marketing Dashboard",
+      client: "Marketing Pro",
+      status: "Active",
+      progress: 85,
+      deadline: "Nov 05, 2023",
+      value: 22500,
+      managerId: 3,
+      description: "Creating a dashboard for marketing analytics"
+    });
+
+    // Create sample employees
+    this.createEmployee({
+      firstName: "Leslie",
+      lastName: "Alexander",
+      email: "leslie.alexander@example.com",
+      department: "Development",
+      status: "Active",
+      projectId: 1,
+      salary: 45000,
+      role: "Developer",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+    });
+    
+    this.createEmployee({
+      firstName: "Michael",
+      lastName: "Johnson",
+      email: "michael.johnson@example.com",
+      department: "Design",
+      status: "Active",
+      projectId: 2,
+      salary: 52000,
+      role: "Designer",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+    });
+    
+    this.createEmployee({
+      firstName: "Jennifer",
+      lastName: "Wilson",
+      email: "jennifer.wilson@example.com",
+      department: "Marketing",
+      status: "On Leave",
+      projectId: 4,
+      salary: 48000,
+      role: "Marketing Specialist",
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+    });
+    
+    this.createEmployee({
+      firstName: "David",
+      lastName: "Brown",
+      email: "david.brown@example.com",
+      department: "Project Management",
+      status: "Active",
+      projectId: 3,
+      salary: 62000,
+      role: "Project Manager",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+    });
+    
+    // Additional employees
+    for (let i = 5; i <= 28; i++) {
+      const depts = ["Development", "Design", "Marketing", "Project Management", "Finance"];
+      const statuses = ["Active", "On Leave", "Inactive"];
+      const projects = [1, 2, 3, 4, null];
+      
+      this.createEmployee({
+        firstName: `Employee`,
+        lastName: `${i}`,
+        email: `employee${i}@example.com`,
+        department: depts[Math.floor(Math.random() * depts.length)],
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+        projectId: projects[Math.floor(Math.random() * projects.length)],
+        salary: 30000 + Math.floor(Math.random() * 40000),
+        role: "Team Member",
+        avatar: `https://randomuser.me/api/portraits/${i % 2 === 0 ? 'women' : 'men'}/${i % 10}.jpg`
+      });
+    }
+
+    // Create sample billings
+    this.createBilling({
+      projectId: 1,
+      month: "October",
+      year: 2023,
+      amount: 15000,
+      status: "Paid",
+      invoiceDate: "2023-10-01",
+      paymentDate: "2023-10-15"
+    });
+    
+    this.createBilling({
+      projectId: 2,
+      month: "October",
+      year: 2023,
+      amount: 20000,
+      status: "Pending",
+      invoiceDate: "2023-10-05",
+      paymentDate: null
+    });
+    
+    this.createBilling({
+      projectId: 3,
+      month: "October",
+      year: 2023,
+      amount: 10000,
+      status: "Paid",
+      invoiceDate: "2023-10-10",
+      paymentDate: "2023-10-20"
+    });
+    
+    this.createBilling({
+      projectId: 4,
+      month: "October",
+      year: 2023,
+      amount: 7500,
+      status: "Overdue",
+      invoiceDate: "2023-10-02",
+      paymentDate: null
+    });
+
+    // Create sample bonuses
+    this.createBonus({
+      projectId: 1,
+      employeeId: 1,
+      month: "October",
+      year: 2023,
+      amount: 1500,
+      percentage: 10,
+      status: "Pending"
+    });
+    
+    this.createBonus({
+      projectId: 2,
+      employeeId: 2,
+      month: "October",
+      year: 2023,
+      amount: 2000,
+      percentage: 10,
+      status: "Approved"
+    });
+    
+    this.createBonus({
+      projectId: 4,
+      employeeId: 3,
+      month: "October",
+      year: 2023,
+      amount: 1000,
+      percentage: 10,
+      status: "Paid"
+    });
+
+    // Create revenue data
+    this.createRevenue({
+      month: "October",
+      year: 2023,
+      amount: 124892,
+      expenses: 82675,
+      profit: 42217
+    });
+    
+    this.createRevenue({
+      month: "September",
+      year: 2023,
+      amount: 115425,
+      expenses: 78437,
+      profit: 36988
+    });
+    
+    this.createRevenue({
+      month: "August",
+      year: 2023,
+      amount: 98762,
+      expenses: 65400,
+      profit: 33362
+    });
+    
+    this.createRevenue({
+      month: "July",
+      year: 2023,
+      amount: 105320,
+      expenses: 70150,
+      profit: 35170
+    });
+
+    // Create profit distributions
+    this.createProfitDistribution({
+      partnerId: 1,
+      month: "October",
+      year: 2023,
+      amount: 16800,
+      percentage: 40
+    });
+    
+    this.createProfitDistribution({
+      partnerId: 2,
+      month: "October",
+      year: 2023,
+      amount: 14700,
+      percentage: 35
+    });
+    
+    this.createProfitDistribution({
+      partnerId: 3,
+      month: "October",
+      year: 2023,
+      amount: 10500,
+      percentage: 25
+    });
+
+    // Create sample salary details
+    this.createSalary({
+      employeeId: 1,
+      month: "October",
+      year: 2023,
+      basicSalary: 3750,
+      bonus: 1500,
+      taxDeduction: 500,
+      loanDeduction: 0,
+      arrears: 0,
+      travelAllowance: 300,
+      netSalary: 5050,
+      status: "Paid",
+      paymentDate: "2023-10-30"
+    });
+
+    this.createSalary({
+      employeeId: 2,
+      month: "October",
+      year: 2023,
+      basicSalary: 4333,
+      bonus: 2000,
+      taxDeduction: 650,
+      loanDeduction: 500,
+      arrears: 0,
+      travelAllowance: 400,
+      netSalary: 5583,
+      status: "Paid",
+      paymentDate: "2023-10-30"
+    });
+
+    this.createSalary({
+      employeeId: 3,
+      month: "October",
+      year: 2023,
+      basicSalary: 4000,
+      bonus: 1000,
+      taxDeduction: 600,
+      loanDeduction: 0,
+      arrears: 750,
+      travelAllowance: 250,
+      netSalary: 5400,
+      status: "Paid",
+      paymentDate: "2023-10-30"
+    });
+
+    this.createSalary({
+      employeeId: 4,
+      month: "October",
+      year: 2023,
+      basicSalary: 5167,
+      bonus: 0,
+      taxDeduction: 775,
+      loanDeduction: 1000,
+      arrears: 0,
+      travelAllowance: 500,
+      netSalary: 3892,
+      status: "Paid",
+      paymentDate: "2023-10-30"
+    });
+    
+    // Create sample expenses
+    this.createExpense({
+      date: "2023-10-05",
+      month: "October",
+      year: 2023,
+      description: "Office Rent",
+      amount: 4500,
+      category: "Rent",
+      paymentMethod: "Bank Transfer",
+      receiptUrl: null,
+      notes: "Monthly office rent"
+    });
+    
+    this.createExpense({
+      date: "2023-10-10",
+      month: "October",
+      year: 2023,
+      description: "Electricity Bill",
+      amount: 850,
+      category: "Utilities",
+      paymentMethod: "Credit Card",
+      receiptUrl: null,
+      notes: "Monthly electricity bill"
+    });
+    
+    this.createExpense({
+      date: "2023-10-12",
+      month: "October",
+      year: 2023,
+      description: "Internet Service",
+      amount: 750,
+      category: "Utilities",
+      paymentMethod: "Credit Card",
+      receiptUrl: null,
+      notes: "Monthly internet bill"
+    });
+    
+    this.createExpense({
+      date: "2023-10-15",
+      month: "October",
+      year: 2023,
+      description: "Office Groceries",
+      amount: 650,
+      category: "Groceries",
+      paymentMethod: "Cash",
+      receiptUrl: null,
+      notes: "Coffee, snacks, and kitchen supplies"
+    });
+    
+    this.createExpense({
+      date: "2023-10-18",
+      month: "October",
+      year: 2023,
+      description: "Office Supplies",
+      amount: 425,
+      category: "Supplies",
+      paymentMethod: "Credit Card",
+      receiptUrl: null,
+      notes: "Stationery, printer ink, etc."
+    });
+    
+    this.createExpense({
+      date: "2023-10-20",
+      month: "October",
+      year: 2023,
+      description: "Software Subscriptions",
+      amount: 1250,
+      category: "Software",
+      paymentMethod: "Credit Card",
+      receiptUrl: null,
+      notes: "Adobe, Microsoft, and other software subscriptions"
+    });
+    
+    this.createExpense({
+      date: "2023-10-25",
+      month: "October",
+      year: 2023,
+      description: "Income Tax Payment",
+      amount: 3500,
+      category: "Taxes",
+      paymentMethod: "Bank Transfer",
+      receiptUrl: null,
+      notes: "Quarterly tax payment"
+    });
+    
+    this.createExpense({
+      date: "2023-09-05",
+      month: "September",
+      year: 2023,
+      description: "Office Rent",
+      amount: 4500,
+      category: "Rent",
+      paymentMethod: "Bank Transfer",
+      receiptUrl: null,
+      notes: "Monthly office rent"
+    });
+    
+    this.createExpense({
+      date: "2023-09-08",
+      month: "September",
+      year: 2023,
+      description: "Electricity Bill",
+      amount: 820,
+      category: "Utilities",
+      paymentMethod: "Credit Card",
+      receiptUrl: null,
+      notes: "Monthly electricity bill"
+    });
+    
+    this.createExpense({
+      date: "2023-09-12",
+      month: "September",
+      year: 2023,
+      description: "Internet Service",
+      amount: 750,
+      category: "Utilities",
+      paymentMethod: "Credit Card",
+      receiptUrl: null,
+      notes: "Monthly internet bill"
+    });
+  }
+
+  // Employee methods
+  async getEmployees(): Promise<Employee[]> {
+    return Array.from(this.employees.values());
+  }
+
+  async getEmployee(id: number): Promise<Employee | undefined> {
+    return this.employees.get(id);
+  }
+
+  async createEmployee(employee: InsertEmployee): Promise<Employee> {
+    const id = this.currentEmployeeId++;
+    const newEmployee: Employee = { ...employee, id };
+    this.employees.set(id, newEmployee);
+    return newEmployee;
+  }
+
+  async updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined> {
+    const existingEmployee = this.employees.get(id);
+    if (!existingEmployee) return undefined;
+    
+    const updatedEmployee: Employee = { ...existingEmployee, ...employee };
+    this.employees.set(id, updatedEmployee);
+    return updatedEmployee;
+  }
+
+  async deleteEmployee(id: number): Promise<boolean> {
+    return this.employees.delete(id);
+  }
+
+  // Project methods
+  async getProjects(): Promise<Project[]> {
+    return Array.from(this.projects.values());
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    return this.projects.get(id);
+  }
+
+  async createProject(project: InsertProject): Promise<Project> {
+    const id = this.currentProjectId++;
+    const newProject: Project = { ...project, id };
+    this.projects.set(id, newProject);
+    return newProject;
+  }
+
+  async updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined> {
+    const existingProject = this.projects.get(id);
+    if (!existingProject) return undefined;
+    
+    const updatedProject: Project = { ...existingProject, ...project };
+    this.projects.set(id, updatedProject);
+    return updatedProject;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    return this.projects.delete(id);
+  }
+
+  // Billing methods
+  async getBillings(): Promise<Billing[]> {
+    return Array.from(this.billings.values());
+  }
+
+  async getBillingsByProject(projectId: number): Promise<Billing[]> {
+    return Array.from(this.billings.values()).filter(billing => billing.projectId === projectId);
+  }
+
+  async getBilling(id: number): Promise<Billing | undefined> {
+    return this.billings.get(id);
+  }
+
+  async createBilling(billing: InsertBilling): Promise<Billing> {
+    const id = this.currentBillingId++;
+    const newBilling: Billing = { ...billing, id };
+    this.billings.set(id, newBilling);
+    return newBilling;
+  }
+
+  async updateBilling(id: number, billing: Partial<InsertBilling>): Promise<Billing | undefined> {
+    const existingBilling = this.billings.get(id);
+    if (!existingBilling) return undefined;
+    
+    const updatedBilling: Billing = { ...existingBilling, ...billing };
+    this.billings.set(id, updatedBilling);
+    return updatedBilling;
+  }
+
+  async deleteBilling(id: number): Promise<boolean> {
+    return this.billings.delete(id);
+  }
+
+  // Partner methods
+  async getPartners(): Promise<Partner[]> {
+    return Array.from(this.partners.values());
+  }
+
+  async getPartner(id: number): Promise<Partner | undefined> {
+    return this.partners.get(id);
+  }
+
+  async createPartner(partner: InsertPartner): Promise<Partner> {
+    const id = this.currentPartnerId++;
+    const newPartner: Partner = { ...partner, id };
+    this.partners.set(id, newPartner);
+    return newPartner;
+  }
+
+  async updatePartner(id: number, partner: Partial<InsertPartner>): Promise<Partner | undefined> {
+    const existingPartner = this.partners.get(id);
+    if (!existingPartner) return undefined;
+    
+    const updatedPartner: Partner = { ...existingPartner, ...partner };
+    this.partners.set(id, updatedPartner);
+    return updatedPartner;
+  }
+
+  async deletePartner(id: number): Promise<boolean> {
+    return this.partners.delete(id);
+  }
+
+  // Bonus methods
+  async getBonuses(): Promise<Bonus[]> {
+    return Array.from(this.bonuses.values());
+  }
+
+  async getBonusesByProject(projectId: number): Promise<Bonus[]> {
+    return Array.from(this.bonuses.values()).filter(bonus => bonus.projectId === projectId);
+  }
+
+  async getBonusesByEmployee(employeeId: number): Promise<Bonus[]> {
+    return Array.from(this.bonuses.values()).filter(bonus => bonus.employeeId === employeeId);
+  }
+
+  async getBonus(id: number): Promise<Bonus | undefined> {
+    return this.bonuses.get(id);
+  }
+
+  async createBonus(bonus: InsertBonus): Promise<Bonus> {
+    const id = this.currentBonusId++;
+    const newBonus: Bonus = { ...bonus, id };
+    this.bonuses.set(id, newBonus);
+    return newBonus;
+  }
+
+  async updateBonus(id: number, bonus: Partial<InsertBonus>): Promise<Bonus | undefined> {
+    const existingBonus = this.bonuses.get(id);
+    if (!existingBonus) return undefined;
+    
+    const updatedBonus: Bonus = { ...existingBonus, ...bonus };
+    this.bonuses.set(id, updatedBonus);
+    return updatedBonus;
+  }
+
+  async deleteBonus(id: number): Promise<boolean> {
+    return this.bonuses.delete(id);
+  }
+
+  // Revenue methods
+  async getRevenues(): Promise<Revenue[]> {
+    return Array.from(this.revenues.values());
+  }
+
+  async getRevenue(id: number): Promise<Revenue | undefined> {
+    return this.revenues.get(id);
+  }
+
+  async createRevenue(revenue: InsertRevenue): Promise<Revenue> {
+    const id = this.currentRevenueId++;
+    const newRevenue: Revenue = { ...revenue, id };
+    this.revenues.set(id, newRevenue);
+    return newRevenue;
+  }
+
+  async updateRevenue(id: number, revenue: Partial<InsertRevenue>): Promise<Revenue | undefined> {
+    const existingRevenue = this.revenues.get(id);
+    if (!existingRevenue) return undefined;
+    
+    const updatedRevenue: Revenue = { ...existingRevenue, ...revenue };
+    this.revenues.set(id, updatedRevenue);
+    return updatedRevenue;
+  }
+
+  async deleteRevenue(id: number): Promise<boolean> {
+    return this.revenues.delete(id);
+  }
+
+  // Profit Distribution methods
+  async getProfitDistributions(): Promise<ProfitDistribution[]> {
+    return Array.from(this.profitDistributions.values());
+  }
+
+  async getProfitDistributionsByPartner(partnerId: number): Promise<ProfitDistribution[]> {
+    return Array.from(this.profitDistributions.values()).filter(dist => dist.partnerId === partnerId);
+  }
+
+  async getProfitDistribution(id: number): Promise<ProfitDistribution | undefined> {
+    return this.profitDistributions.get(id);
+  }
+
+  async createProfitDistribution(distribution: InsertProfitDistribution): Promise<ProfitDistribution> {
+    const id = this.currentProfitDistributionId++;
+    const newDistribution: ProfitDistribution = { ...distribution, id };
+    this.profitDistributions.set(id, newDistribution);
+    return newDistribution;
+  }
+
+  async updateProfitDistribution(id: number, distribution: Partial<InsertProfitDistribution>): Promise<ProfitDistribution | undefined> {
+    const existingDistribution = this.profitDistributions.get(id);
+    if (!existingDistribution) return undefined;
+    
+    const updatedDistribution: ProfitDistribution = { ...existingDistribution, ...distribution };
+    this.profitDistributions.set(id, updatedDistribution);
+    return updatedDistribution;
+  }
+
+  async deleteProfitDistribution(id: number): Promise<boolean> {
+    return this.profitDistributions.delete(id);
+  }
+
+  // Dashboard data methods
+  // Salary methods
+  async getSalaries(): Promise<Salary[]> {
+    return Array.from(this.salaries.values());
+  }
+
+  async getSalariesByEmployee(employeeId: number): Promise<Salary[]> {
+    return Array.from(this.salaries.values()).filter(salary => salary.employeeId === employeeId);
+  }
+
+  async getSalariesByMonth(month: string, year: number): Promise<Salary[]> {
+    return Array.from(this.salaries.values()).filter(
+      salary => salary.month === month && salary.year === year
+    );
+  }
+
+  async getSalary(id: number): Promise<Salary | undefined> {
+    return this.salaries.get(id);
+  }
+
+  async createSalary(salary: InsertSalary): Promise<Salary> {
+    // Calculate net salary if not provided
+    const netSalary = salary.netSalary ?? this.calculateNetSalary(salary);
+    
+    const id = this.currentSalaryId++;
+    const newSalary: Salary = { ...salary, id, netSalary };
+    this.salaries.set(id, newSalary);
+    return newSalary;
+  }
+
+  async updateSalary(id: number, salary: Partial<InsertSalary>): Promise<Salary | undefined> {
+    const existingSalary = this.salaries.get(id);
+    if (!existingSalary) return undefined;
+    
+    // Recalculate net salary if any component was changed
+    const needsRecalculation = 
+      salary.basicSalary !== undefined || 
+      salary.bonus !== undefined || 
+      salary.taxDeduction !== undefined || 
+      salary.loanDeduction !== undefined || 
+      salary.arrears !== undefined || 
+      salary.travelAllowance !== undefined;
+    
+    const updatedSalary: Salary = { ...existingSalary, ...salary };
+    
+    if (needsRecalculation) {
+      updatedSalary.netSalary = this.calculateNetSalary(updatedSalary);
+    }
+    
+    this.salaries.set(id, updatedSalary);
+    return updatedSalary;
+  }
+
+  async deleteSalary(id: number): Promise<boolean> {
+    return this.salaries.delete(id);
+  }
+
+  calculateNetSalary(salaryDetails: Partial<InsertSalary>): number {
+    const basicSalary = Number(salaryDetails.basicSalary) || 0;
+    const bonus = Number(salaryDetails.bonus) || 0;
+    const taxDeduction = Number(salaryDetails.taxDeduction) || 0;
+    const loanDeduction = Number(salaryDetails.loanDeduction) || 0;
+    const arrears = Number(salaryDetails.arrears) || 0;
+    const travelAllowance = Number(salaryDetails.travelAllowance) || 0;
+    
+    return basicSalary + bonus + arrears + travelAllowance - taxDeduction - loanDeduction;
+  }
+  
+  // Expense operations
+  async getExpenses(): Promise<Expense[]> {
+    return Array.from(this.expenses.values());
+  }
+
+  async getExpense(id: number): Promise<Expense | undefined> {
+    return this.expenses.get(id);
+  }
+
+  async createExpense(expense: InsertExpense): Promise<Expense> {
+    const id = this.currentExpenseId++;
+    const newExpense: Expense = { ...expense, id };
+    this.expenses.set(id, newExpense);
+    return newExpense;
+  }
+
+  async updateExpense(id: number, expense: Partial<InsertExpense>): Promise<Expense | undefined> {
+    const existingExpense = this.expenses.get(id);
+    if (!existingExpense) {
+      return undefined;
+    }
+    
+    const updatedExpense: Expense = { ...existingExpense, ...expense };
+    this.expenses.set(id, updatedExpense);
+    return updatedExpense;
+  }
+
+  async deleteExpense(id: number): Promise<boolean> {
+    return this.expenses.delete(id);
+  }
+
+  async getDashboardData(): Promise<any> {
+    // Import our utility functions for dashboard metrics
+    const { prepareDashboardData } = await import('./dashboard-util');
+    
+    // Fetch all necessary data at once
+    const employees = await this.getEmployees();
+    const projects = await this.getProjects();
+    const partners = await this.getPartners();
+    const bonuses = await this.getBonuses(); 
+    const profitDistributions = await this.getProfitDistributions();
+    const expenses = await this.getExpenses();
+    const billings = await this.getBillings();
+    
+    console.log('DEBUG - BILLING DATA:', JSON.stringify(billings));
+    
+    // Use the utility function to prepare dashboard data
+    return prepareDashboardData(
+      employees, 
+      projects, 
+      billings, 
+      expenses, 
+      partners, 
+      profitDistributions
+    );
+        try {
+          const currentBilling = billings[i];
+          console.log(`Processing billing #${i+1}:`, currentBilling);
+          
+          // Safe parsing of the amount
+          const amountStr = currentBilling.amount?.toString() || "0";
+          const amountValue = parseFloat(amountStr);
+          
+          if (!isNaN(amountValue)) {
+            totalBillingAmount += amountValue;
+            console.log(`Added ${amountValue} to total. Running total: ${totalBillingAmount}`);
+          } else {
+            console.log(`Warning: Could not parse amount "${amountStr}" to number`);
+          }
+        } catch (error) {
+          console.error(`Error processing billing entry ${i}:`, error);
+        }
+      }
+    } else {
+      console.log("No billing entries found");
+    }
+    
+    console.log(`FINAL TOTAL REVENUE: ${totalBillingAmount}`);
+    
+    const activeProjects = projects.filter(p => p.status === "Active" || p.status === "In Progress");
+    const totalEmployees = employees.length;
+    
+    // Team insights
+    const departments = [...new Set(employees.map(e => e.department))];
+    const teamInsights = departments.map(dept => {
+      const deptEmployees = employees.filter(e => e.department === dept);
+      // Randomly generate productivity percentage between -5% and +15%
+      const productivity = (Math.random() * 20 - 5).toFixed(0);
+      return {
+        name: dept,
+        count: deptEmployees.length,
+        productivity: parseInt(productivity),
+        progress: 65 + Math.floor(Math.random() * 30) // Random progress between 65-95%
+      };
+    });
+
+    // Recent projects with associated managers
+    const recentProjects = projects.map(project => {
+      const manager = employees.find(e => e.id === project.managerId);
+      return {
+        ...project,
+        managerName: manager ? `${manager.firstName} ${manager.lastName}` : 'Unassigned'
+      };
+    }).sort((a, b) => b.progress - a.progress).slice(0, 4);
+
+    // Revenue chart data
+    const revenueChartData = revenues.map(rev => ({
+      month: rev.month,
+      year: rev.year,
+      revenue: rev.amount,
+      expenses: rev.expenses,
+      profit: rev.profit
+    })).sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year;
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      return months.indexOf(a.month) - months.indexOf(b.month);
+    });
+
+    // Partners profit distribution
+    const partnerDistributions = partners.map(partner => {
+      const distribution = profitDistributions.find(pd => pd.partnerId === partner.id && pd.month === currentMonth && pd.year === currentYear);
+      return {
+        id: partner.id,
+        name: partner.name,
+        share: partner.share,
+        amount: distribution ? distribution.amount : 0
+      };
+    });
+
+    // Bonus calculations for projects
+    const projectBonuses = projects.filter(p => p.status === 'Active').slice(0, 3).map(project => {
+      const manager = employees.find(e => e.id === project.managerId);
+      // Random ROI between 80% and 120%
+      const roi = 80 + Math.floor(Math.random() * 40);
+      // Random bonus between 2000 and 5000
+      const bonusAmount = Math.floor(Math.random() * 3000) + 2000;
+      
+      return {
+        id: project.id,
+        name: project.name,
+        roi: roi,
+        manager: manager ? `${manager.firstName} ${manager.lastName}` : 'Unassigned',
+        bonus: bonusAmount
+      };
+    });
+    
+    const totalBonusPool = projectBonuses.reduce((sum, p) => sum + p.bonus, 0);
+
+    // Just use the previously calculated totalBillingAmount for total revenue
+    let totalRevenue = totalBillingAmount;
+    
+    // Calculate total expenses from expenses
+    let totalExpenses = 0;
+    if (expenses && expenses.length > 0) {
+      for (const expense of expenses) {
+        const expenseAmount = typeof expense.amount === 'string' 
+          ? parseFloat(expense.amount) 
+          : Number(expense.amount);
+        
+        if (!isNaN(expenseAmount)) {
+          totalExpenses += expenseAmount;
+        }
+      }
+    }
+    
+    console.log(`Calculated total expenses: ${totalExpenses}`);
+    
+    // Calculate profit and expense ratio based on billing amount
+    const profit = totalBillingAmount - totalExpenses;
+    const expenseRatio = totalBillingAmount > 0 ? (totalExpenses / totalBillingAmount * 100).toFixed(2) : "0.00";
+    
+    // For debugging, explicitly log the metrics we're returning
+    console.log('FINAL DASHBOARD METRICS:', {
+      totalRevenue: totalBillingAmount,
+      totalExpenses,
+      profit,
+      expenseRatio,
+      employeeCount: totalEmployees,
+      projectCount: projects.length,
+      activeProjectCount: activeProjects.length
+    });
+    
+    return {
+      metrics: {
+        totalRevenue: totalBillingAmount,
+        totalExpenses,
+        profit,
+        expenseRatio,
+        employeeCount: totalEmployees,
+        projectCount: projects.length,
+        activeProjectCount: activeProjects.length
+      },
+      recentProjects,
+      revenueChartData,
+      teamInsights,
+      partnerDistributions,
+      projectBonuses,
+      totalBonusPool
+    };
+  }
+}
+
+import { DbStorage } from './db-storage';
+
+// Create and export a database storage instance
+export const storage = new DbStorage();
