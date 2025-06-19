@@ -19,6 +19,7 @@ interface HeaderProps {
     label: string;
     onClick: () => void;
   };
+  additionalActions?: React.ReactNode;
   period?: string; // Add current period to props
 }
 
@@ -30,6 +31,7 @@ const Header = ({
   onPeriodChange,
   onExport,
   actionButton,
+  additionalActions,
   period
 }: HeaderProps) => {
   // Get current period and previous periods
@@ -117,6 +119,8 @@ const Header = ({
               Export Data
             </Button>
           )}
+          
+          {additionalActions}
           
           {actionButton && (
             <Button onClick={actionButton.onClick}>

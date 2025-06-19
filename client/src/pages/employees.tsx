@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { useEmployee } from '@/hooks/use-employee';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const Employees = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -65,30 +66,103 @@ const Employees = () => {
     setSelectedEmployee(null);
   };
 
-  const handleFormSuccess = () => {
-    setIsFormOpen(false);
-    setSelectedEmployee(null);
-    toast({
-      title: selectedEmployee ? 'Employee Updated' : 'Employee Added',
-      description: `The employee has been ${selectedEmployee ? 'updated' : 'added'} successfully.`,
-    });
-  };
-
-  const handleCreate = async (data: any) => {
+  const handleFormSubmit = async (data: any) => {
     try {
-      await createEmployee.mutateAsync(data);
-      handleFormSuccess();
+      if (selectedEmployee) {
+        await updateEmployee.mutateAsync({ id: selectedEmployee.id, data });
+        toast({
+          title: 'Employee Updated',
+          description: 'The employee has been updated successfully.',
+        });
+      } else {
+        await createEmployee.mutateAsync(data);
+        toast({
+          title: 'Employee Added',
+          description: 'The employee has been added successfully.',
+        });
+      }
+      handleFormClose();
     } catch (error) {
-      console.error("Error creating employee:", error);
+      console.error("Error submitting form:", error);
     }
   };
 
-  const handleUpdate = async (data: any) => {
+  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
     try {
-      await updateEmployee.mutateAsync({ id: selectedEmployee.id, data });
-      handleFormSuccess();
+      const text = await file.text();
+      const rows = text.split("\n").filter(row => row.trim() !== "");
+      const headers = rows[0].split(",").map(h => h.trim());
+      console.log('Headers:', headers);
+
+      const employees = rows.slice(1).map(row => {
+        const values = row.split(",").map(cell => cell.trim());
+        const record: any = {};
+        headers.forEach((header, index) => {
+          record[header] = values[index];
+        });
+        console.log('Row data:', record);
+
+        // Map the CSV data to the required format
+        const mappedEmployee = {
+          firstName: record.firstName,
+          lastName: record.lastName,
+          email: record.email,
+          department: record.department,
+          salary: record.salary,
+          status: record.status || "Active",
+          role: record.role || "",
+          projectId: record.projectId ? Number(record.projectId) : null,
+          avatar: record.avatar || ""
+        };
+        console.log('Mapped employee:', mappedEmployee);
+        return mappedEmployee;
+      });
+
+      console.log('Sending employees to API:', employees);
+
+      const response = await fetch("/api/employees/bulk-upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ employees }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to upload employees');
+      }
+
+      const result = await response.json();
+      console.log('API Response:', result);
+
+      if (result.failed > 0) {
+        toast({
+          title: 'Upload Completed with Errors',
+          description: `${result.created} records created\n${result.failed} records failed\n\nErrors:\n${result.errors.map((e: any) => `- ${e.error}`).join('\n')}`,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Upload Successful',
+          description: `Successfully uploaded ${result.created} employee records`,
+        });
+      }
+
+      getEmployees.refetch?.();
     } catch (error) {
-      console.error("Error updating employee:", error);
+      console.error("Upload failed:", error);
+      toast({
+        title: 'Upload Failed',
+        description: error instanceof Error ? error.message : 'Failed to upload employees',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -160,6 +234,38 @@ const Employees = () => {
           label: 'Add Employee',
           onClick: handleAddEmployee
         }}
+        additionalActions={
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => document.getElementById('csvUpload')?.click()}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
+              </svg>
+              Upload CSV
+            </Button>
+            <Input
+              id="csvUpload"
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleCSVUpload}
+            />
+          </div>
+        }
       />
       
       <div className="py-6 px-4 sm:px-6 lg:px-8">
@@ -183,11 +289,11 @@ const Employees = () => {
               {selectedEmployee ? "Edit Employee" : "Add Employee"}
             </DialogTitle>
           </DialogHeader>
-        <EmployeeForm 
-          employee={selectedEmployee}
-            onSubmit={selectedEmployee ? handleUpdate : handleCreate}
-          onCancel={handleFormClose}
-        />
+          <EmployeeForm 
+            employee={selectedEmployee}
+            onSubmit={handleFormSubmit}
+            onCancel={handleFormClose}
+          />
         </DialogContent>
       </Dialog>
     </main>
