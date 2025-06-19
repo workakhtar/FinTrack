@@ -1,4 +1,17 @@
+// lib/queryClient.ts - Updated to match your existing structure
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+
+const API_BASE_URL = 'https://inovaqofinance-be-production.up.railway.app';
+
+// Get auth token from localStorage
+function getAuthToken(): string | null {
+  try {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user).token : null;
+  } catch {
+    return null;
+  }
+}
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,12 +25,28 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const token = getAuthToken();
+  const fullUrl = url.startsWith('/api') ? `${API_BASE_URL}${url}` : url;
+  
+  const headers: Record<string, string> = {
+    ...(data && { "Content-Type": "application/json" } as Record<string, string>),
+    ...(token && { "Authorization": `Bearer ${token}` }),
+  };
+
+  const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
+
+  // Handle unauthorized responses
+  if (res.status === 401) {
+    localStorage.removeItem('user');
+    // Trigger a page reload to redirect to login
+    window.location.href = '/';
+    throw new Error('Unauthorized');
+  }
 
   await throwIfResNotOk(res);
   return res;
@@ -29,12 +58,26 @@ export async function apiRequestJson(
   url: string,
   data?: unknown | undefined,
 ): Promise<any> {
-  const res = await fetch(url, {
+  const token = getAuthToken();
+  const fullUrl = url.startsWith('/api') ? `${API_BASE_URL}${url}` : url;
+  
+  const headers: Record<string, string> = {
+    ...(data && { "Content-Type": "application/json" } as Record<string, string>),
+    ...(token && { "Authorization": `Bearer ${token}` }),
+  };
+
+  const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
+
+  if (res.status === 401) {
+    localStorage.removeItem('user');
+    window.location.href = '/';
+    throw new Error('Unauthorized');
+  }
 
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -63,12 +106,27 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const token = getAuthToken();
+    const url = queryKey[0] as string;
+    const fullUrl = url.startsWith('/api') ? `${API_BASE_URL}${url}` : url;
+    
+    const headers: Record<string, string> = {
+      ...(token && { "Authorization": `Bearer ${token}` }),
+    };
+
+    const res = await fetch(fullUrl, {
+      headers,
       credentials: "include",
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
+    }
+
+    if (res.status === 401) {
+      localStorage.removeItem('user');
+      window.location.href = '/';
+      throw new Error('Unauthorized');
     }
 
     await throwIfResNotOk(res);

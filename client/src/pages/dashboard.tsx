@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient'; // Import the apiRequest function
 import Header from '@/components/layout/header';
 import MetricCard from '@/components/dashboard/metric-card';
 import RevenueChart from '@/components/dashboard/revenue-chart';
@@ -22,7 +23,7 @@ interface DashboardData {
     previousMonthEmployeeCount: number;
     previousMonthActiveProjectCount: number;
   };
-  recentEmployees?: any[]; // Updated: Changed from employees to recentEmployees
+  recentEmployees?: any[];
   recentProjects: any[];
   revenueChartData: any[];
   teamInsights: any[];
@@ -49,25 +50,22 @@ const Dashboard = () => {
   
   const { data, isLoading, error, refetch } = useQuery<DashboardData>({
     queryKey: ['/api/dashboard', month, year],
-    // Replace your queryFn with this simpler version that shows totals
-
-queryFn: async () => {
-  const timestamp = new Date().getTime();
-  const url = `/api/dashboard?month=${month}&year=${year}&_t=${timestamp}`;
-  console.log(`Making dashboard API request to: ${url}`);
-  
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error('Failed to fetch dashboard data');
-  }
-  
-  const serverData = await response.json();
-  console.log(`Dashboard received server data:`, serverData.metrics);
-  console.log(`Dashboard received employees data:`, serverData.recentEmployees); // Added debug log
-  
-  // Return server data as-is (no client-side filtering)
-  return serverData;
-},
+    // Updated to use apiRequest from your queryClient
+    queryFn: async () => {
+      const timestamp = new Date().getTime();
+      const url = `/api/dashboard?month=${month}&year=${year}&_t=${timestamp}`;
+      console.log(`Making dashboard API request to: ${url}`);
+      
+      // Use apiRequest instead of fetch - this will automatically add the production URL and auth headers
+      const response = await apiRequest('GET', url);
+      const serverData = await response.json();
+      
+      console.log(`Dashboard received server data:`, serverData.metrics);
+      console.log(`Dashboard received employees data:`, serverData.recentEmployees);
+      
+      // Return server data as-is (no client-side filtering)
+      return serverData;
+    },
     retry: 2,
     staleTime: 0, // Don't cache results
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
@@ -161,7 +159,7 @@ queryFn: async () => {
             isCount
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             }
             change={activeProjectChange}
@@ -214,12 +212,6 @@ queryFn: async () => {
               <button className="px-6 py-4 text-sm font-medium text-primary border-b-2 border-primary">
                 Employee Overview
               </button>
-              {/* <button className="px-6 py-4 text-sm font-medium text-neutral-500 border-b-2 border-transparent hover:text-neutral-700 hover:border-neutral-300">
-                Billing Summary
-              </button>
-              <button className="px-6 py-4 text-sm font-medium text-neutral-500 border-b-2 border-transparent hover:text-neutral-700 hover:border-neutral-300">
-                Profit Distribution
-              </button> */}
             </nav>
           </div>
           
@@ -262,7 +254,6 @@ queryFn: async () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-neutral-200">
-                          {/* Updated: Use recentEmployees instead of employees */}
                           {(data?.recentEmployees || []).slice(0, 4).map((employee) => (
                             <tr key={employee.id}>
                               <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
@@ -289,11 +280,9 @@ queryFn: async () => {
                                 </span>
                               </td>
                               <td className="px-3 py-4 text-sm text-neutral-500 whitespace-nowrap">
-                                {/* Updated: Use projectId since your API returns projectId, not projectName */}
                                 #{employee.projectId || 'Unassigned'}
                               </td>
                               <td className="px-3 py-4 text-sm text-neutral-500 whitespace-nowrap">
-                                {/* Updated: Handle salary as string from API */}
                                 Rs {parseInt(employee.salary || 0).toLocaleString()}
                               </td>
                             </tr>
