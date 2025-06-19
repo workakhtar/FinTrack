@@ -1,14 +1,24 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+const BASE_URL = "https://inovaqofinance-be-production.up.railway.app";
 
 export function useProject() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const createProject = useMutation({
+  const getProjects = useQuery({
+    queryKey: ['/api/projects'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `${BASE_URL}/api/projects`);
+      return response.json();
+    }
+  });
+
+    const createProject = useMutation({
     mutationFn: async (projectData: any) => {
-      const res = await apiRequest("POST", "/api/projects", projectData);
+      const res = await apiRequest("POST", `${BASE_URL}/api/projects`, projectData);
       return res.json();
     },
     onSuccess: () => {
@@ -30,7 +40,7 @@ export function useProject() {
 
   const updateProject = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const res = await apiRequest("PUT", `/api/projects/${id}`, data);
+      const res = await apiRequest("PUT", `${BASE_URL}/api/projects/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -52,7 +62,7 @@ export function useProject() {
 
   const deleteProject = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/projects/${id}`);
+      await apiRequest("DELETE", `${BASE_URL}/api/projects/${id}`);
       return id;
     },
     onSuccess: () => {
@@ -74,7 +84,7 @@ export function useProject() {
 
   const deleteProjects = useMutation({
     mutationFn: async (ids: number[]) => {
-      const res = await apiRequest("POST", "/api/projects/bulk-delete", { ids });
+      const res = await apiRequest("POST", `${BASE_URL}/api/projects/bulk-delete`, { ids });
       return res.json();
     },
     onSuccess: () => {
@@ -95,6 +105,7 @@ export function useProject() {
   });
 
   return {
+    getProjects,
     createProject,
     updateProject,
     deleteProject,

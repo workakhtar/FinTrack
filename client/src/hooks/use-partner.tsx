@@ -1,14 +1,24 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+const BASE_URL = "https://inovaqofinance-be-production.up.railway.app";
 
 export function usePartner() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const getPartners = useQuery({
+    queryKey: ['/api/partners'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `${BASE_URL}/api/partners`);
+      return response.json();
+    }
+  });
+
   const createPartner = useMutation({
     mutationFn: async (partnerData: any) => {
-      const res = await apiRequest("POST", "/api/partners", partnerData);
+      const res = await apiRequest("POST", `${BASE_URL}/api/partners`, partnerData);
       return res.json();
     },
     onSuccess: () => {
@@ -30,7 +40,7 @@ export function usePartner() {
 
   const updatePartner = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const res = await apiRequest("PUT", `/api/partners/${id}`, data);
+      const res = await apiRequest("PUT", `${BASE_URL}/api/partners/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -52,7 +62,7 @@ export function usePartner() {
 
   const deletePartner = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/partners/${id}`);
+      await apiRequest("DELETE", `${BASE_URL}/api/partners/${id}`);
       return id;
     },
     onSuccess: () => {
@@ -73,6 +83,7 @@ export function usePartner() {
   });
 
   return {
+    getPartners,
     createPartner,
     updatePartner,
     deletePartner,

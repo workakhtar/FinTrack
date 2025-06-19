@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+const BASE_URL = "https://inovaqofinance-be-production.up.railway.app";
+
 export function useBilling() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -9,14 +11,14 @@ export function useBilling() {
   const getBillings = useQuery({
     queryKey: ['/api/billings'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/billings');
+      const response = await apiRequest('GET', `${BASE_URL}/api/billings`);
       return response.json();
     }
   });
 
   const createBilling = useMutation({
     mutationFn: async (billingData: any) => {
-      const res = await apiRequest("POST", "/api/billings", billingData);
+      const res = await apiRequest("POST", `${BASE_URL}/api/billings`, billingData);
       return res.json();
     },
     onSuccess: () => {
@@ -38,7 +40,7 @@ export function useBilling() {
 
   const updateBilling = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const res = await apiRequest("PUT", `/api/billings/${id}`, data);
+      const res = await apiRequest("PUT", `${BASE_URL}/api/billings/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -60,7 +62,7 @@ export function useBilling() {
 
   const deleteBilling = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/billings/${id}`);
+      await apiRequest("DELETE", `${BASE_URL}/api/billings/${id}`);
       return id;
     },
     onSuccess: () => {

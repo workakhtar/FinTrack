@@ -52,35 +52,20 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
         if (savedUser) {
           const userData = JSON.parse(savedUser);
           
-          // Validate token by making a test API call
+          // If we have user data and a token, set the user without validating
+          // This prevents logout on refresh
           if (userData.token) {
-            try {
-              const response = await fetch('https://inovaqofinance-be-production.up.railway.app/api/user/profile', {
-                headers: {
-                  'Authorization': `Bearer ${userData.token}`,
-                  'Content-Type': 'application/json',
-                },
-              });
-              
-              if (response.ok) {
-                // Token is valid, set user
-                setUser(userData);
-              } else {
-                // Token is invalid, clear storage
-                localStorage.removeItem('user');
-              }
-            } catch (error) {
-              // Network error or invalid token, clear storage
-              localStorage.removeItem('user');
-            }
+            setUser(userData);
+            setIsLoading(false);
+            return;
           }
         }
       } catch (error) {
         console.error('Auth check error:', error);
         localStorage.removeItem('user');
-      } finally {
-        setIsLoading(false);
       }
+      
+      setIsLoading(false);
     };
     
     checkAuthState();
@@ -88,12 +73,15 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      // Always use full URL for login to avoid CORS issues
       const response = await fetch('https://inovaqofinance-be-production.up.railway.app/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        // Add mode to handle CORS
+        mode: 'cors',
       });
 
       if (!response.ok) {
@@ -127,6 +115,12 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       return userData;
     } catch (error) {
       console.error('Login error:', error);
+      
+      // Provide more specific error messages for CORS
+      if (error instanceof Error && (error.message.includes('CORS') || error.name === 'TypeError')) {
+        throw new Error('Network error. Please check your internet connection or try again later.');
+      }
+      
       throw error;
     }
   };
@@ -170,7 +164,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
 // Protected Route Component
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = useAuth() as { user: any, isLoading: boolean };
 
   if (isLoading) {
     return (
@@ -253,7 +247,7 @@ function Router() {
 
   // If user is logged in, show protected routes with layout
   return (
-    <ProtectedLayout isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen}  >
+    <ProtectedLayout isMobileSidebarOpen={isMobileSidebarOpen} setIsMobileSidebarOpen={setIsMobileSidebarOpen}>
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/employees" component={Employees} />

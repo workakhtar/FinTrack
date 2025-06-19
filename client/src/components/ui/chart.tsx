@@ -161,9 +161,11 @@ const Chart = ({
   }, [data, type, xKey, yKeys, showGrid, showLegend, pieColors]);
 
   return (
-    <ResponsiveContainer width={width} height={height}>
-      {renderChart}
-    </ResponsiveContainer>
+    <div style={{ width: width, height: height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        {renderChart}
+      </ResponsiveContainer>
+    </div>
   );
 };
 

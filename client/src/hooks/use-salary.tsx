@@ -2,6 +2,8 @@ import { useMutation, useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+const BASE_URL = "https://inovaqofinance-be-production.up.railway.app";
+
 export function useSalary() {
   const { toast } = useToast();
 
@@ -9,7 +11,7 @@ export function useSalary() {
   const getSalaries = useQuery({
     queryKey: ['/api/salaries'],
     queryFn: async () => {
-      const res = await fetch('/api/salaries');
+      const res = await fetch(`${BASE_URL}/api/salaries`);
       if (!res.ok) {
         throw new Error('Failed to fetch salaries');
       }
@@ -23,7 +25,7 @@ export function useSalary() {
       queryKey: ['/api/salaries/employee', employeeId],
       enabled: !!employeeId,
       queryFn: async () => {
-        const res = await fetch(`/api/salaries/employee/${employeeId}`);
+        const res = await fetch(`${BASE_URL}/api/salaries/employee/${employeeId}`);
         if (!res.ok) {
           throw new Error('Failed to fetch employee salaries');
         }
@@ -38,7 +40,7 @@ export function useSalary() {
       queryKey: ['/api/salaries/month', month, year],
       enabled: !!month && !!year,
       queryFn: async () => {
-        const res = await fetch(`/api/salaries/month/${month}/${year}`);
+        const res = await fetch(`${BASE_URL}/api/salaries/month/${month}/${year}`);
         if (!res.ok) {
           throw new Error('Failed to fetch monthly salaries');
         }
@@ -50,7 +52,7 @@ export function useSalary() {
   // Create a salary record
   const createSalary = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest("POST", "/api/salaries", data);
+      const res = await apiRequest("POST", `${BASE_URL}/api/salaries`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -74,7 +76,7 @@ export function useSalary() {
   // Update a salary record
   const updateSalary = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const res = await apiRequest("PUT", `/api/salaries/${id}`, data);
+      const res = await apiRequest("PUT", `${BASE_URL}/api/salaries/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -98,7 +100,7 @@ export function useSalary() {
   // Delete a salary record
   const deleteSalary = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/salaries/${id}`);
+      await apiRequest("DELETE", `${BASE_URL}/api/salaries/${id}`);
       return id;
     },
     onSuccess: () => {
@@ -119,7 +121,7 @@ export function useSalary() {
 
   const deleteSalaries = useMutation({
     mutationFn: async (ids: number[]) => {
-      return await apiRequest("POST", "/api/salaries/bulk-delete", { ids });
+      return await apiRequest("POST", `${BASE_URL}/api/salaries/bulk-delete`, { ids });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/salaries'] });

@@ -2,13 +2,33 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+const BASE_URL = "https://inovaqofinance-be-production.up.railway.app";
+
 export function useEmployee() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const getEmployees = useQuery({
+    queryKey: ['/api/employees'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `${BASE_URL}/api/employees`);
+      return response.json();
+    }
+  });
+
+  const getEmployee = (id: number) => {
+    return useQuery({
+      queryKey: ['/api/employees', id],
+      queryFn: async () => {
+        const response = await apiRequest('GET', `${BASE_URL}/api/employees/${id}`);
+        return response.json();
+      }
+    });
+  };
+
   const createEmployee = useMutation({
     mutationFn: async (employeeData: any) => {
-      const res = await apiRequest("POST", "/api/employees", employeeData);
+      const res = await apiRequest("POST", `${BASE_URL}/api/employees`, employeeData);
       return res.json();
     },
     onSuccess: () => {
@@ -29,7 +49,7 @@ export function useEmployee() {
 
   const updateEmployee = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const res = await apiRequest("PUT", `/api/employees/${id}`, data);
+      const res = await apiRequest("PUT", `${BASE_URL}/api/employees/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -50,7 +70,7 @@ export function useEmployee() {
 
   const deleteEmployee = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/employees/${id}`);
+      await apiRequest("DELETE", `${BASE_URL}/api/employees/${id}`);
       return id;
     },
     onSuccess: () => {
@@ -71,7 +91,7 @@ export function useEmployee() {
 
   const deleteEmployees = useMutation({
     mutationFn: async (ids: number[]) => {
-      const res = await apiRequest("POST", "/api/employees/bulk-delete", { ids });
+      const res = await apiRequest("POST", `${BASE_URL}/api/employees/bulk-delete`, { ids });
       return res.json();
     },
     onSuccess: () => {
@@ -89,30 +109,6 @@ export function useEmployee() {
       });
     },
   });
-
-  const getEmployees = useQuery({
-    queryKey: ['/api/employees'],
-    onError: (error: any) => {
-      toast({
-        title: "Error Loading Employees",
-        description: error.message || "There was an error loading employees.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const getEmployee = (id: number) => {
-    return useQuery({
-      queryKey: ['/api/employees', id],
-      onError: (error: any) => {
-        toast({
-          title: "Error Loading Employee",
-          description: error.message || "There was an error loading the employee.",
-          variant: "destructive",
-        });
-      }
-    });
-  };
 
   return {
     getEmployees,
