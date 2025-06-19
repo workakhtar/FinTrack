@@ -204,7 +204,7 @@ const Settings = () => {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="partners">Partners</TabsTrigger>
             <TabsTrigger value="company">Company Settings</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            {/* <TabsTrigger value="notifications">Notifications</TabsTrigger>  */}
           </TabsList>
           
           <TabsContent value="partners">

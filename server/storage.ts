@@ -1549,7 +1549,7 @@ export class DbStorage implements IStorage {
       );
       
       // Log the metrics for debugging
-      console.log(`DASHBOARD METRICS: Revenue=$${dashboardData.metrics.totalRevenue}, Expenses=$${dashboardData.metrics.totalExpenses}`);
+      console.log(`DASHBOARD METRICS: Revenue=Rs${dashboardData.metrics.totalRevenue}, Expenses=Rs${dashboardData.metrics.totalExpenses}`);
       
       return dashboardData;
     } catch (error) {
