@@ -1,3 +1,0 @@
--- -- Remove deadline and value columns from projects table
--- ALTER TABLE projects DROP COLUMN IF EXISTS deadline;
--- ALTER TABLE projects DROP COLUMN IF EXISTS value;
