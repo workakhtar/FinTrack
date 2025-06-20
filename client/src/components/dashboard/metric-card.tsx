@@ -66,7 +66,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
                           <polyline points="6 9 12 15 18 9" />
                         )}
                       </svg>
-                      {isCount ? `+${change}` : `${change}%`}
+                      {isCount ? `+${change}` : `${Number(change).toFixed(2)}%`}
                     </span>
                     <span className="text-sm text-neutral-500 ml-2">vs last month</span>
                   </div>

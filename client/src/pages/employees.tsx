@@ -125,10 +125,16 @@ const Employees = () => {
 
       console.log('Sending employees to API:', employees);
 
-      const response = await fetch("/api/employees/bulk-upload", {
+      const user = JSON.parse(localStorage.getItem("user") || "");
+      const token = user?.token;
+
+
+
+      const response = await fetch("https://inovaqofinance-be-production.up.railway.app/api/employees/bulk-upload", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ employees }),
       });

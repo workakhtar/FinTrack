@@ -27,9 +27,9 @@ const ProfitDistribution: React.FC<ProfitDistributionProps> = ({ partners }) => 
     <div className="bg-white shadow rounded-lg p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium text-neutral-700">Profit Distribution</h2>
-        <button className="text-sm font-medium text-primary hover:text-primary-dark">
+        {/* <button className="text-sm font-medium text-primary hover:text-primary-dark">
           Full Report
-        </button>
+        </button> */}
       </div>
       
       {partners.length === 0 ? (
@@ -45,6 +45,8 @@ const ProfitDistribution: React.FC<ProfitDistributionProps> = ({ partners }) => 
               xKey="name"
               yKeys={[{ key: 'value', name: 'Amount', color: '#1565C0' }]}
               pieColors={colorMap}
+              showLegend={false}
+              showPieLabels={false}
             />
           </div>
           

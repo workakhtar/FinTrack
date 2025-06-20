@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useProject } from "@/hooks/use-project";
+import { useEffect } from "react";
 
 // Extended validation schema
 const projectFormSchema = z.object({
@@ -77,6 +78,16 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
           description: ""
         },
   });
+
+  // Reset form when project changes
+  useEffect(() => {
+    if (project) {
+      form.reset({
+        ...project,
+        managerId: project.managerId || null,
+      });
+    }
+  }, [project, form]);
 
   const onSubmit = async (data: ProjectFormValues) => {
     try {

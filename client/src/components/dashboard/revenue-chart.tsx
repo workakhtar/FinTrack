@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import Chart from '@/components/ui/chart';
 import { formatCurrency } from '@/lib/utils';
+import Chart from '@/components/ui/chart';
 
 interface RevenueData {
   month: string;
@@ -12,13 +11,27 @@ interface RevenueData {
 
 interface RevenueChartProps {
   data: RevenueData[];
+  selectedTimeframe: 'monthly' | 'quarterly' | 'yearly';
+  onTimeframeChange: (tf: 'monthly' | 'quarterly' | 'yearly') => void;
 }
 
-const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+const RevenueChart: React.FC<RevenueChartProps> = ({ data, selectedTimeframe, onTimeframeChange }) => {
+  // Sort data by year and month ascending before mapping for the chart
+  const sortedData = [...data].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    // If monthly or quarterly, sort by month as well
+    if (a.month && b.month) {
+      const monthOrder = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
+    }
+    return 0;
+  });
 
-  const chartData = data.map(item => ({
-    name: `${item.month} ${item.year}`,
+  const chartData = sortedData.map(item => ({
+    name: selectedTimeframe === 'yearly' ? `${item.year}` : `${item.month} ${item.year}`,
     revenue: item.revenue,
     expenses: item.expenses,
     profit: item.profit
@@ -38,19 +51,19 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
         <div className="flex space-x-2">
           <button 
             className={buttonClasses('monthly')}
-            onClick={() => setSelectedTimeframe('monthly')}
+            onClick={() => onTimeframeChange('monthly')}
           >
             Monthly
           </button>
           <button 
             className={buttonClasses('quarterly')}
-            onClick={() => setSelectedTimeframe('quarterly')}
+            onClick={() => onTimeframeChange('quarterly')}
           >
             Quarterly
           </button>
           <button 
             className={buttonClasses('yearly')}
-            onClick={() => setSelectedTimeframe('yearly')}
+            onClick={() => onTimeframeChange('yearly')}
           >
             Yearly
           </button>

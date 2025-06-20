@@ -36,7 +36,7 @@ const Header = ({
 }: HeaderProps) => {
   // Get current period and previous periods
   const currentPeriod = getCurrentMonthAndYear();
-  const previousPeriods = getPreviousMonths(6);
+  const previousPeriods = getPreviousMonths(12);
   
   // Add April and May 2025 custom periods for testing
   const customPeriods = [

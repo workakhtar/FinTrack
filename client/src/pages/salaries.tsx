@@ -153,11 +153,14 @@ export default function SalariesPage() {
       });
 
       console.log('Sending salaries to API:', salaries);
+      const user = JSON.parse(localStorage.getItem("user") || "");
+      const token = user?.token;
 
-      const response = await fetch("/api/salaries/bulk-upload", {
+      const response = await fetch("https://inovaqofinance-be-production.up.railway.app/api/salaries/bulk-upload", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ salaries }),
       });

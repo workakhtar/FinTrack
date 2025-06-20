@@ -40,7 +40,7 @@ export function useExpense() {
 
   const updateExpense = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const res = await apiRequest("PUT", `${BASE_URL}/api/expenses/${id}`, data);
+      const res = await apiRequest("PATCH", `${BASE_URL}/api/expenses/${id}`, data);
       return res.json();
     },
     onSuccess: () => {

@@ -20,37 +20,37 @@ const BasicExpenseTable = ({
   onDelete,
   onMultiDelete
 }: ExpenseTableProps) => {
-  const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  // const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
+  // const [selectAll, setSelectAll] = useState(false);
   
-  const handleToggleSelectAll = () => {
-    if (selectAll) {
-      setSelectedExpenses([]);
-    } else {
-      setSelectedExpenses(expenses.map(exp => exp.id));
-    }
-    setSelectAll(!selectAll);
-  };
+  // const handleToggleSelectAll = () => {
+  //   if (selectAll) {
+  //     setSelectedExpenses([]);
+  //   } else {
+  //     setSelectedExpenses(expenses.map(exp => exp.id));
+  //   }
+  //   setSelectAll(!selectAll);
+  // };
   
-  const handleToggleSelect = (id: number) => {
-    if (selectedExpenses.includes(id)) {
-      setSelectedExpenses(selectedExpenses.filter(expId => expId !== id));
-      setSelectAll(false);
-    } else {
-      setSelectedExpenses([...selectedExpenses, id]);
-      if (selectedExpenses.length + 1 === expenses.length) {
-        setSelectAll(true);
-      }
-    }
-  };
+  // const handleToggleSelect = (id: number) => {
+  //   if (selectedExpenses.includes(id)) {
+  //     setSelectedExpenses(selectedExpenses.filter(expId => expId !== id));
+  //     setSelectAll(false);
+  //   } else {
+  //     setSelectedExpenses([...selectedExpenses, id]);
+  //     if (selectedExpenses.length + 1 === expenses.length) {
+  //       setSelectAll(true);
+  //     }
+  //   }
+  // };
   
-  const handleMultiDelete = () => {
-    if (onMultiDelete && selectedExpenses.length > 0) {
-      onMultiDelete(selectedExpenses);
-      setSelectedExpenses([]);
-      setSelectAll(false);
-    }
-  };
+  // const handleMultiDelete = () => {
+  //   if (onMultiDelete && selectedExpenses.length > 0) {
+  //     onMultiDelete(selectedExpenses);
+  //     setSelectedExpenses([]);
+  //     setSelectAll(false);
+  //   }
+  // };
 
   // Log expenses data for debugging
   console.log("Raw expenses data:", JSON.stringify(expenses, null, 2));
@@ -97,7 +97,7 @@ const BasicExpenseTable = ({
 
   return (
     <div className="space-y-4">
-      {selectedExpenses.length > 0 && (
+      {/* {selectedExpenses.length > 0 && (
         <div className="flex items-center gap-2 mb-2">
           <Button 
             variant="destructive"
@@ -107,17 +107,17 @@ const BasicExpenseTable = ({
             Delete Selected ({selectedExpenses.length})
           </Button>
         </div>
-      )}
+      )} */}
 
       <div className="border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">
-                <Checkbox 
+                {/* <Checkbox 
                   checked={selectAll} 
                   onCheckedChange={handleToggleSelectAll} 
-                />
+                /> */}
               </TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Description</TableHead>
@@ -132,10 +132,10 @@ const BasicExpenseTable = ({
             {expenses.map((expense) => (
               <TableRow key={expense.id}>
                 <TableCell>
-                  <Checkbox 
+                  {/* <Checkbox 
                     checked={selectedExpenses.includes(expense.id)} 
                     onCheckedChange={() => handleToggleSelect(expense.id)} 
-                  />
+                  /> */}
                 </TableCell>
                 <TableCell>
                   <div className="font-medium">{expense.category || 'Unknown'}</div>

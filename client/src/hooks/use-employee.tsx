@@ -91,7 +91,9 @@ export function useEmployee() {
 
   const deleteEmployees = useMutation({
     mutationFn: async (ids: number[]) => {
-      const res = await apiRequest("POST", `${BASE_URL}/api/employees/bulk-delete`, { ids });
+      // Ensure the request uses the BASE_URL for the API endpoint
+      const url = `${BASE_URL}/api/employees/bulk-delete`;
+      const res = await apiRequest("POST", url, { ids });
       return res.json();
     },
     onSuccess: () => {

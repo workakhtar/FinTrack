@@ -38,6 +38,7 @@ const Dashboard = () => {
   const currentMonthYear = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
   
   const [period, setPeriod] = useState(currentMonthYear);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const { toast } = useToast();
   
   // Extract month and year from period string for querying
@@ -46,29 +47,25 @@ const Dashboard = () => {
   const year = periodParts[1];
   
   // Add some debug logging
-  console.log(`Dashboard requesting data for period: ${month} ${year}`);
+  console.log(`Dashboard requesting data for period: ${month} ${year}, timeframe: ${selectedTimeframe}`);
   
   const { data, isLoading, error, refetch } = useQuery<DashboardData>({
-    queryKey: ['/api/dashboard', month, year],
-    // Updated to use apiRequest from your queryClient
+    queryKey: ['/api/dashboard', month, year, selectedTimeframe],
     queryFn: async () => {
       const timestamp = new Date().getTime();
-      const url = `/api/dashboard?month=${month}&year=${year}&_t=${timestamp}`;
+      let url = `/api/dashboard?periodType=${selectedTimeframe}&year=${year}&_t=${timestamp}`;
+      if (selectedTimeframe === 'monthly') {
+        url += `&month=${month}`;
+      }
+      // For quarterly, you may want to add a quarter param if your backend supports it
       console.log(`Making dashboard API request to: ${url}`);
-      
-      // Use apiRequest instead of fetch - this will automatically add the production URL and auth headers
       const response = await apiRequest('GET', url);
       const serverData = await response.json();
-      
-      console.log(`Dashboard received server data:`, serverData.metrics);
-      console.log(`Dashboard received employees data:`, serverData.recentEmployees);
-      
-      // Return server data as-is (no client-side filtering)
       return serverData;
     },
     retry: 2,
-    staleTime: 0, // Don't cache results
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    staleTime: 0,
+    refetchOnWindowFocus: false,
   });
 
   // Calculate month-over-month changes
@@ -197,7 +194,11 @@ const Dashboard = () => {
         {/* Charts and Recent Projects */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           <div className="lg:col-span-2 bg-white shadow rounded-lg p-4">
-            <RevenueChart data={data?.revenueChartData || []} />
+            <RevenueChart 
+              data={data?.revenueChartData || []}
+              selectedTimeframe={selectedTimeframe}
+              onTimeframeChange={setSelectedTimeframe}
+            />
           </div>
           
           <div className="bg-white shadow rounded-lg p-4">

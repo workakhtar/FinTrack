@@ -11,7 +11,18 @@ export function useSalary() {
   const getSalaries = useQuery({
     queryKey: ['/api/salaries'],
     queryFn: async () => {
-      const res = await fetch(`${BASE_URL}/api/salaries`);
+      const user = JSON.parse(localStorage.getItem("user") || "");
+      const token = user?.token;
+
+      const res = await fetch(`${BASE_URL}/api/salaries`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+        }
+      );
       if (!res.ok) {
         throw new Error('Failed to fetch salaries');
       }

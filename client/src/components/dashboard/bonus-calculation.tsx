@@ -29,12 +29,12 @@ const BonusCalculation: React.FC<BonusCalculationProps> = ({
     <div className="bg-white shadow rounded-lg p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium text-neutral-700">Bonus Calculation</h2>
-        <div>
+        {/* <div>
           <select className="text-sm border-neutral-300 rounded-md focus:border-primary focus:ring focus:ring-primary/20 focus:ring-opacity-50">
             <option>October 2023</option>
             <option>November 2023</option>
           </select>
-        </div>
+        </div> */}
       </div>
       
       {projectBonuses.length === 0 ? (

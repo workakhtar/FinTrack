@@ -207,7 +207,7 @@ const Bonuses = () => {
             )}
           </Button>
           
-          <Button 
+          {/* <Button 
             variant="secondary"
             onClick={() => setIsConfirmDialogOpen(true)}
             className="inline-flex items-center"
@@ -240,6 +240,7 @@ const Bonuses = () => {
             ) : (
               <>
                 <svg 
+                  onClick={() => alert('Bonus finalization would happen here')}
                   xmlns="http://www.w3.org/2000/svg" 
                   className="h-4 w-4 mr-2" 
                   viewBox="0 0 24 24"
@@ -248,6 +249,7 @@ const Bonuses = () => {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  
                 >
                   <circle cx="12" cy="12" r="10" />
                   <path d="m9 12 2 2 4-4" />
@@ -255,7 +257,15 @@ const Bonuses = () => {
                 Finalize All Bonuses
               </>
             )}
-          </Button>
+          </Button> */}
+          <div className="flex justify-end mb-4">
+            <Button
+              className="justify-center"
+              onClick={() => alert('Bonus finalization would happen here')}
+            >
+              Finalize all Bonuses
+            </Button>
+          </div>
         </div>
         
         <BonusTable 

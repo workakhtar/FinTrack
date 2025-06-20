@@ -31,6 +31,7 @@ type ChartProps = {
   showGrid?: boolean;
   showLegend?: boolean;
   pieColors?: string[];
+  showPieLabels?: boolean;
 };
 
 const Chart = ({
@@ -42,7 +43,8 @@ const Chart = ({
   width = '100%',
   showGrid = true,
   showLegend = true,
-  pieColors = ['#1565C0', '#388E3C', '#F57C00', '#D32F2F', '#5C6BC0', '#7B1FA2', '#00796B', '#FFA000']
+  pieColors = ['#1565C0', '#388E3C', '#F57C00', '#D32F2F', '#5C6BC0', '#7B1FA2', '#00796B', '#FFA000'],
+  showPieLabels = true,
 }: ChartProps) => {
   const renderChart = useMemo(() => {
     switch (type) {
@@ -117,9 +119,9 @@ const Chart = ({
               fill="#8884d8"
               dataKey={yKeys[0].key}
               nameKey={xKey}
-              label={({ name, value, percent }) => 
-                `${name} (${(percent * 100).toFixed(0)}%)`
-              }
+              {...(showPieLabels ? {
+                label: ({ name, value, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`
+              } : {})}
             >
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
@@ -158,7 +160,7 @@ const Chart = ({
       default:
         return <div>Unsupported chart type</div>;
     }
-  }, [data, type, xKey, yKeys, showGrid, showLegend, pieColors]);
+  }, [data, type, xKey, yKeys, showGrid, showLegend, pieColors, showPieLabels]);
 
   return (
     <div style={{ width: width, height: height }}>
