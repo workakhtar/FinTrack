@@ -5,10 +5,13 @@ import Header from '@/components/layout/header';
 import MetricCard from '@/components/dashboard/metric-card';
 import RevenueChart from '@/components/dashboard/revenue-chart';
 import RecentProjects from '@/components/dashboard/recent-projects';
-import TeamInsights from '@/components/dashboard/team-insights';
 import ProfitDistribution from '@/components/dashboard/profit-distribution';
 import BonusCalculation from '@/components/dashboard/bonus-calculation';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarImage } from '@radix-ui/react-avatar';
+import { AvatarFallback } from '@/components/ui/avatar';
+import { useUI } from '@/App';
+import { Button } from '@/components/ui/button';
 
 // Define types for the dashboard data
 interface DashboardData {
@@ -26,7 +29,6 @@ interface DashboardData {
   recentEmployees?: any[];
   recentProjects: any[];
   revenueChartData: any[];
-  teamInsights: any[];
   partnerDistributions: any[];
   projectBonuses: any[];
   totalBonusPool: number;
@@ -40,6 +42,7 @@ const Dashboard = () => {
   const [period, setPeriod] = useState(currentMonthYear);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const { toast } = useToast();
+  const { isSidebarCollapsed, toggleSidebar } = useUI();
   
   // Extract month and year from period string for querying
   const periodParts = period.split(' ');
@@ -51,18 +54,18 @@ const Dashboard = () => {
   
   const { data, isLoading, error, refetch } = useQuery<DashboardData>({
     queryKey: ['/api/dashboard', month, year, selectedTimeframe],
-    queryFn: async () => {
-      const timestamp = new Date().getTime();
+queryFn: async () => {
+  const timestamp = new Date().getTime();
       let url = `/api/dashboard?periodType=${selectedTimeframe}&year=${year}&_t=${timestamp}`;
       if (selectedTimeframe === 'monthly') {
         url += `&month=${month}`;
       }
       // For quarterly, you may want to add a quarter param if your backend supports it
-      console.log(`Making dashboard API request to: ${url}`);
+  console.log(`Making dashboard API request to: ${url}`);
       const response = await apiRequest('GET', url);
-      const serverData = await response.json();
-      return serverData;
-    },
+  const serverData = await response.json();
+  return serverData;
+},
     retry: 2,
     staleTime: 0,
     refetchOnWindowFocus: false,
@@ -97,8 +100,11 @@ const Dashboard = () => {
 
   const handlePeriodChange = (newPeriod: string) => {
     setPeriod(newPeriod);
-    // This will trigger a refetch with the new period since our queryKey depends on month and year
-    // The useQuery hook will automatically refetch when its dependencies (month, year) change
+    if (newPeriod === 'All Months') {
+      setSelectedTimeframe('yearly');
+    } else {
+      setSelectedTimeframe('monthly');
+    }
   };
 
   const handleExportData = () => {
@@ -146,7 +152,7 @@ const Dashboard = () => {
             title="Total Revenue"
             value={data?.metrics.totalRevenue}
             icon={<span className="text-xl font-medium">₨</span>}
-            change={revenueChange}
+            change={selectedTimeframe === 'monthly' ? revenueChange : undefined}
             iconColor="primary"
           />
           
@@ -159,7 +165,7 @@ const Dashboard = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             }
-            change={activeProjectChange}
+            change={selectedTimeframe === 'monthly' ? activeProjectChange : undefined}
             iconColor="secondary"
           />
           
@@ -172,7 +178,7 @@ const Dashboard = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             }
-            change={employeeChange}
+            change={selectedTimeframe === 'monthly' ? employeeChange : undefined}
             iconColor="accent"
           />
           
@@ -184,10 +190,10 @@ const Dashboard = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
             }
-            change={expensesChange}
+            change={selectedTimeframe === 'monthly' ? expensesChange : undefined}
             iconColor="error"
-            changeDirection="up"
-            changeIsGood={false}
+            // changeDirection="up"
+            // changeIsGood={false}
           />
         </div>
         
@@ -260,7 +266,10 @@ const Dashboard = () => {
                               <td className="py-4 pl-4 pr-3 text-sm whitespace-nowrap">
                                 <div className="flex items-center">
                                   <div className="h-10 w-10 flex-shrink-0">
-                                    <img className="h-10 w-10 rounded-full" src={employee.avatar} alt={`${employee.firstName} ${employee.lastName}`} />
+                                  <Avatar className="h-10 w-10 mr-4">
+            <AvatarImage src={employee.avatar || ''} alt={`${employee.firstName} ${employee.lastName}`} />
+            <AvatarFallback>{employee.firstName[0]}{employee.lastName[0]}</AvatarFallback>
+          </Avatar>
                                   </div>
                                   <div className="ml-4">
                                     <div className="font-medium text-neutral-900">{`${employee.firstName} ${employee.lastName}`}</div>
@@ -300,9 +309,12 @@ const Dashboard = () => {
         
         {/* Reports And Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-          <TeamInsights teams={data?.teamInsights || []} />
-          <ProfitDistribution partners={data?.partnerDistributions || []} />
+          <ProfitDistribution
+            className="lg:col-span-2"
+            partners={data?.partnerDistributions || []}
+          />
           <BonusCalculation 
+            className="lg:col-span-1"
             projectBonuses={data?.projectBonuses || []} 
             totalBonusPool={data?.totalBonusPool || 0}
           />

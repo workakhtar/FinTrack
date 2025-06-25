@@ -1,7 +1,7 @@
 // lib/queryClient.ts - Updated to match your existing structure
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const API_BASE_URL = 'https://inovaqofinance-be-production.up.railway.app';
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 // Get auth token from localStorage
 function getAuthToken(): string | null {
@@ -26,7 +26,7 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const token = getAuthToken();
-  const fullUrl = url.startsWith('/api') ? `${API_BASE_URL}${url}` : url;
+  const fullUrl = url.startsWith('/api') ? `${BASE_URL}${url}` : url;
   
   const headers: Record<string, string> = {
     ...(data && { "Content-Type": "application/json" } as Record<string, string>),
@@ -59,7 +59,7 @@ export async function apiRequestJson(
   data?: unknown | undefined,
 ): Promise<any> {
   const token = getAuthToken();
-  const fullUrl = url.startsWith('/api') ? `${API_BASE_URL}${url}` : url;
+  const fullUrl = url.startsWith('/api') ? `${BASE_URL}${url}` : url;
   
   const headers: Record<string, string> = {
     ...(data && { "Content-Type": "application/json" } as Record<string, string>),
@@ -108,7 +108,7 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const token = getAuthToken();
     const url = queryKey[0] as string;
-    const fullUrl = url.startsWith('/api') ? `${API_BASE_URL}${url}` : url;
+    const fullUrl = url.startsWith('/api') ? `${BASE_URL}${url}` : url;
     
     const headers: Record<string, string> = {
       ...(token && { "Authorization": `Bearer ${token}` }),

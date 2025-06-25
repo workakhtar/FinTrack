@@ -32,6 +32,8 @@ import { useEmployee } from "@/hooks/use-employee";
 import { getCurrentMonthAndYear } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 export default function SalariesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
@@ -156,7 +158,7 @@ export default function SalariesPage() {
       const user = JSON.parse(localStorage.getItem("user") || "");
       const token = user?.token;
 
-      const response = await fetch("https://inovaqofinance-be-production.up.railway.app/api/salaries/bulk-upload", {
+      const response = await fetch(`${BASE_URL}/api/salaries/bulk-upload`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

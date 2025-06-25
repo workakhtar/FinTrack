@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ProjectBonus {
   id: number;
@@ -13,11 +14,13 @@ interface ProjectBonus {
 interface BonusCalculationProps {
   projectBonuses: ProjectBonus[];
   totalBonusPool: number;
+  className?: string;
 }
 
 const BonusCalculation: React.FC<BonusCalculationProps> = ({ 
   projectBonuses, 
-  totalBonusPool 
+  totalBonusPool,
+  className
 }) => {
   const getRoiBadgeVariant = (roi: number) => {
     if (roi >= 100) return 'success';
@@ -26,7 +29,7 @@ const BonusCalculation: React.FC<BonusCalculationProps> = ({
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-4">
+    <div className={cn("bg-white shadow rounded-lg p-4", className)}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium text-neutral-700">Bonus Calculation</h2>
         {/* <div>

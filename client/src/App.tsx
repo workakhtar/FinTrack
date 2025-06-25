@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -17,6 +17,37 @@ import Settings from "@/pages/settings";
 import Login from "@/pages/login";
 import MobileSidebar from "@/components/layout/mobile-sidebar";
 import { useState, createContext, useContext, useEffect } from "react";
+
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+// UI Context for managing sidebar visibility
+const UIContext = createContext<{
+  isSidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+}>({
+  isSidebarCollapsed: false,
+  toggleSidebar: () => {},
+});
+
+export const useUI = () => {
+  return useContext(UIContext);
+};
+
+// UI Provider
+function UIProvider({ children }: { children: React.ReactNode }) {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(prev => !prev);
+  };
+
+  const value = {
+    isSidebarCollapsed,
+    toggleSidebar,
+  };
+
+  return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
+}
 
 // Auth Context
 const AuthContext = createContext<{
@@ -74,7 +105,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       // Always use full URL for login to avoid CORS issues
-      const response = await fetch('https://inovaqofinance-be-production.up.railway.app/api/auth/login', {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +161,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       // Call logout endpoint if token exists
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (user.token) {
-        await fetch('https://inovaqofinance-be-production.up.railway.app/api/auth/logout', {
+        await fetch(`${BASE_URL}/api/auth/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${user.token}`,
@@ -184,6 +215,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 // Protected Layout Component
 function ProtectedLayout({ children, isMobileSidebarOpen, setIsMobileSidebarOpen }: { children: React.ReactNode, isMobileSidebarOpen: boolean, setIsMobileSidebarOpen: (isOpen: boolean) => void }) {
   const { user, isLoading } = useAuth();
+  const { isSidebarCollapsed } = useUI();
 
   if (isLoading) {
     return (
@@ -269,10 +301,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <Router />
-          <Toaster />
+          <UIProvider>
+            <Router />
+          </UIProvider>
         </AuthProvider>
       </TooltipProvider>
+      <Toaster />
     </QueryClientProvider>
   );
 }

@@ -240,9 +240,9 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
         data={projects}
         isLoading={isLoading}
         actions={actions}
-        searchValue={searchTerm}
-        onSearch={onSearchChange}
-        searchPlaceholder="Search projects..."
+        // searchValue={searchTerm}
+        // onSearch={onSearchChange}
+        // searchPlaceholder="Search projects..."
       />
     </div>
   );
