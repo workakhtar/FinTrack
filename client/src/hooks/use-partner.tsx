@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = 'https://inovaqofinance-be-production.up.railway.app';
 
 export function usePartner() {
   const queryClient = useQueryClient();

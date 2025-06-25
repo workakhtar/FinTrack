@@ -9,7 +9,7 @@ import { useEmployee } from '@/hooks/use-employee';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = 'https://inovaqofinance-be-production.up.railway.app';
 
 const Employees = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);

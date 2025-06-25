@@ -18,7 +18,7 @@ import Login from "@/pages/login";
 import MobileSidebar from "@/components/layout/mobile-sidebar";
 import { useState, createContext, useContext, useEffect } from "react";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "https://inovaqofinance-be-production.up.railway.app";
 
 // UI Context for managing sidebar visibility
 const UIContext = createContext<{

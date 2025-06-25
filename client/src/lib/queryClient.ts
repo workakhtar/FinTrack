@@ -1,7 +1,7 @@
 // lib/queryClient.ts - Updated to match your existing structure
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = 'https://inovaqofinance-be-production.up.railway.app';
 
 // Get auth token from localStorage
 function getAuthToken(): string | null {
