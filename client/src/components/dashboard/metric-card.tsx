@@ -28,9 +28,12 @@ const MetricCard: React.FC<MetricCardProps> = ({
     error: "bg-destructive/10 text-destructive",
   };
 
-  const formattedValue = isCount
-    ? value?.toString() || "0"
-    : formatCurrency(value);
+  // If value is a string (already formatted), use as-is. Otherwise, format as currency.
+  const formattedValue = typeof value === 'string'
+    ? value
+    : isCount
+      ? value?.toString() || "0"
+      : formatCurrency(value);
 
   const changeColorClass = changeIsGood ? "text-success" : "text-error";
   const changeIconName = changeDirection === "up" ? "arrow-up" : "arrow-down";

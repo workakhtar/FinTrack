@@ -12,6 +12,7 @@ import { Avatar, AvatarImage } from '@radix-ui/react-avatar';
 import { AvatarFallback } from '@/components/ui/avatar';
 import { useUI } from '@/App';
 import { Button } from '@/components/ui/button';
+import { formatNumber } from '@/lib/utils';
 
 // Define types for the dashboard data
 interface DashboardData {
@@ -150,7 +151,7 @@ queryFn: async () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <MetricCard
             title="Total Revenue"
-            value={data?.metrics.totalRevenue}
+            value={formatNumber(data?.metrics.totalRevenue || 0)}
             icon={<span className="text-xl font-medium">₨</span>}
             change={selectedTimeframe === 'monthly' ? revenueChange : undefined}
             iconColor="primary"
@@ -184,7 +185,7 @@ queryFn: async () => {
           
           <MetricCard
             title="Total Expenses"
-            value={data?.metrics.totalExpenses}
+            value={formatNumber(data?.metrics.totalExpenses || 0)}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -192,8 +193,8 @@ queryFn: async () => {
             }
             change={selectedTimeframe === 'monthly' ? expensesChange : undefined}
             iconColor="error"
-            // changeDirection="up"
-            // changeIsGood={false}
+            changeDirection="up"
+            changeIsGood={false}
           />
         </div>
         

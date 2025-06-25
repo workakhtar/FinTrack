@@ -16,6 +16,7 @@ import {
   LineChart,
   Line
 } from 'recharts';
+import { formatNumberShort } from '@/lib/utils';
 
 type DataPoint = {
   [key: string]: any;
@@ -61,8 +62,8 @@ const Chart = ({
           >
             {showGrid && <CartesianGrid strokeDasharray="3 3" />}
             <XAxis dataKey={xKey} />
-            <YAxis />
-            <Tooltip />
+            <YAxis tickFormatter={formatNumberShort} />
+            <Tooltip formatter={(value: number) => formatNumberShort(value)} />
             {showLegend && <Legend />}
             {yKeys.map((item, index) => (
               <Area
@@ -90,8 +91,8 @@ const Chart = ({
           >
             {showGrid && <CartesianGrid strokeDasharray="3 3" />}
             <XAxis dataKey={xKey} />
-            <YAxis />
-            <Tooltip />
+            <YAxis tickFormatter={formatNumberShort} />
+            <Tooltip formatter={(value: number) => formatNumberShort(value)} />
             {showLegend && <Legend />}
             {yKeys.map((item, index) => (
               <Bar
@@ -107,7 +108,7 @@ const Chart = ({
         return (
           <PieChart>
             <Tooltip 
-              formatter={(value: number) => [`Rs. ${value.toLocaleString()}`, 'Amount']}
+              formatter={(value: number) => [`Rs. ${formatNumberShort(value)}`, 'Amount']}
             />
             {showLegend && <Legend />}
             <Pie
@@ -142,8 +143,8 @@ const Chart = ({
           >
             {showGrid && <CartesianGrid strokeDasharray="3 3" />}
             <XAxis dataKey={xKey} />
-            <YAxis />
-            <Tooltip />
+            <YAxis tickFormatter={formatNumberShort} />
+            <Tooltip formatter={(value: number) => formatNumberShort(value)} />
             {showLegend && <Legend />}
             {yKeys.map((item, index) => (
               <Line

@@ -108,3 +108,21 @@ export function getPreviousMonths(count: number): { month: string, year: number 
 export function generateAvatarFromName(name: string): string {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`;
 }
+
+export function formatNumber(value: number): string {
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (absValue >= 1e9) return sign + (absValue / 1e9).toFixed(2) + 'B+';
+  if (absValue >= 1e6) return sign + (absValue / 1e6).toFixed(2) + 'M+';
+  if (absValue >= 1e3) return sign + (absValue / 1e3).toFixed(2) + 'K+';
+  return sign + absValue.toFixed(2);
+}
+
+export function formatNumberShort(value: number): string {
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (absValue >= 1e9) return sign + (absValue / 1e9).toFixed(0) + 'B';
+  if (absValue >= 1e6) return sign + (absValue / 1e6).toFixed(1) + 'M';
+  if (absValue >= 1e3) return sign + (absValue / 1e3).toFixed(1) + 'K';
+  return value.toString();
+}
