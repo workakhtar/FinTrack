@@ -9,6 +9,8 @@ import { useEmployee } from '@/hooks/use-employee';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 const Employees = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
@@ -128,9 +130,7 @@ const Employees = () => {
       const user = JSON.parse(localStorage.getItem("user") || "");
       const token = user?.token;
 
-
-
-      const response = await fetch("https://inovaqofinance-be-production.up.railway.app/api/employees/bulk-upload", {
+      const response = await fetch(`${BASE_URL}/api/employees/bulk-upload`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -206,27 +206,8 @@ const Employees = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-8 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12 mx-auto"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-xl font-medium text-gray-900">Loading Employees</h3>
-          <p className="mt-1 text-gray-500">Loading employee data. Please wait...</p>
-        </div>
+      <div className="h-screen flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }

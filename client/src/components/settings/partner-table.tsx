@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-
+import { useQuery } from "@tanstack/react-query";
 interface Partner {
   id: number;
   name: string;
@@ -60,11 +60,15 @@ const PartnerTable: React.FC<PartnerTableProps> = ({
   const isShareInvalid = Math.abs(totalShare - 100) > 0.1;
   console.log(isShareInvalid);
 
+  const { data: partnersData = [] } = useQuery<Partner[]>({
+    queryKey: ['/api/partners'],
+  });
+
   return (
     <div className="space-y-4">
       <DataTable
         columns={columns}
-        data={partners}
+        data={partnersData}
         isLoading={isLoading}
         actions={(partner) => (
           <div className="flex items-center justify-end space-x-3">
@@ -136,7 +140,7 @@ const PartnerTable: React.FC<PartnerTableProps> = ({
         }
       />
 
-      {partners.length > 0 && (
+      {partnersData.length > 0 && (
         <div className={`p-4 rounded-md ${isShareInvalid ? 'bg-destructive/10' : 'bg-success/10'}`}>
           <div className="flex justify-between items-center">
             <div className="font-medium">Total Share:</div>

@@ -38,36 +38,18 @@ const Header = ({
   const currentPeriod = getCurrentMonthAndYear();
   const previousPeriods = getPreviousMonths(12);
   
-  // Add April and May 2025 custom periods for testing
-  const customPeriods = [
-    { month: 'April', year: 2025 },
-    { month: 'May', year: 2025 }
-  ];
-  
-  // Get unique years from all periods
-  const years = new Set([
-    currentPeriod.year,
-    ...previousPeriods.map(p => p.year),
-    ...customPeriods.map(p => p.year)
-  ]);
-  
-  // Add yearly filter options (All months for each year)
-  const yearlyOptions = Array.from(years).map(year => ({ 
-    month: 'All', 
-    year 
-  }));
-  
   // Combine all periods, convert to strings, and remove duplicates
   const allPeriods = [
     currentPeriod, 
     ...previousPeriods, 
-    ...customPeriods,
-    ...yearlyOptions
   ];
   
   const uniquePeriods = Array.from(new Set(
     allPeriods.map(p => `${p.month} ${p.year}`)
   ));
+
+  // Add the "All" option at the end
+  uniquePeriods.push('All Months');
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8 bg-white border-b">

@@ -29,7 +29,7 @@ const TeamInsights: React.FC<TeamInsightsProps> = ({ teams }) => {
   return (
     <div className="bg-white shadow rounded-lg p-4">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-neutral-700">Team Insights</h2>
+        {/* <h2 className="text-lg font-medium text-neutral-700">Team Insights</h2> */}
         <div className="flex space-x-2">
           <button 
             type="button" 

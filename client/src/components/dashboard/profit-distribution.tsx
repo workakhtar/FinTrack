@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Chart from '@/components/ui/chart';
 import { formatCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface Partner {
   id: number;
@@ -11,11 +12,12 @@ interface Partner {
 
 interface ProfitDistributionProps {
   partners: Partner[];
+  className?: string;
 }
 
 const colorMap = ['#1565C0', '#388E3C', '#F57C00', '#D32F2F', '#5C6BC0'];
 
-const ProfitDistribution: React.FC<ProfitDistributionProps> = ({ partners }) => {
+const ProfitDistribution: React.FC<ProfitDistributionProps> = ({ partners, className }) => {
   console.log(partners , "partners")
   const chartData = partners.map(partner => ({
     name: partner.name,
@@ -24,7 +26,7 @@ const ProfitDistribution: React.FC<ProfitDistributionProps> = ({ partners }) => 
   }));
 
   return (
-    <div className="bg-white shadow rounded-lg p-4">
+    <div className={cn("bg-white shadow rounded-lg p-4", className)}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium text-neutral-700">Profit Distribution</h2>
         {/* <button className="text-sm font-medium text-primary hover:text-primary-dark">

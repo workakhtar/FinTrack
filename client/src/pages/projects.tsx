@@ -168,7 +168,7 @@ const Projects = () => {
       <Dialog open={isFormOpen} onOpenChange={handleFormClose}>
         <ProjectForm 
           project={selectedProject}
-          managers={employees}
+          managers={employees as any[]}
           onSuccess={handleFormSuccess}
           onCancel={handleFormClose}
         />
