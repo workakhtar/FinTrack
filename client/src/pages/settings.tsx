@@ -31,6 +31,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 
 const companySettingsSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
@@ -59,9 +71,10 @@ interface Partner {
 const Settings = () => {
   const [isPartnerFormOpen, setIsPartnerFormOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
   const { deletePartner } = usePartner();
-  const { getCompanySettings, createCompanySettings, updateCompanySettings } = useCompanySettings();
+  const { getCompanySettings, createCompanySettings, updateCompanySettings, deleteCompanySettings } = useCompanySettings();
 
   const form = useForm<CompanySettingsFormValues>({
     resolver: zodResolver(companySettingsSchema),
@@ -159,6 +172,28 @@ const Settings = () => {
     });
   };
 
+  const handleDeleteCompanySettings = async () => {
+    try {
+      if (getCompanySettings.data?.id) {
+        await deleteCompanySettings.mutateAsync(getCompanySettings.data.id);
+        // Reset form after deletion
+        form.reset({
+          companyName: "",
+          taxId: "",
+          address: "",
+          city: "",
+          state: "",
+          postalCode: "",
+          fiscalYearStart: "January",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting company settings:", error);
+    } finally {
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
   if (isError) {
     return (
       <div className="flex-1 p-8 flex items-center justify-center">
@@ -231,10 +266,45 @@ const Settings = () => {
           <TabsContent value="company">
             <Card>
               <CardHeader>
-                <CardTitle>Company Information</CardTitle>
-                <CardDescription>
-                  Manage your company details and settings
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>Company Information</CardTitle>
+                    <CardDescription>
+                      Manage your company details and settings
+                    </CardDescription>
+                  </div>
+                  {getCompanySettings.data && (
+                    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          className="flex items-center gap-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete Settings
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Company Settings</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete the company settings? This action cannot be undone and will remove all company information including name, address, and tax details.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleDeleteCompanySettings}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete Settings
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
